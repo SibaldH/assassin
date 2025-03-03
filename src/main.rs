@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
 mod maze;
-mod resolution;
-mod wall;
 
 fn main() {
     App::new()
@@ -21,7 +19,7 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugins((resolution::ResolutionPlugin, maze::MazePlugin))
+        .add_plugins(maze::MazePlugin)
         .add_systems(Startup, setup)
         .run();
 }
@@ -29,13 +27,3 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
-
-pub const MAZE: &str = "
-1 1 1 1 1 1 1
-1 0 0 0 0 0 1
-1 1 1 0 1 1 1
-1 0 0 0 0 0 1
-1 1 1 1 1 0 1
-1 0 0 0 0 0 1
-1 1 1 1 1 1 1
-";
