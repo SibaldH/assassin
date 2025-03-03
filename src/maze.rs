@@ -1,9 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use rand::{random_range, seq::IndexedRandom};
-
-use crate::resolution::Resolution;
+use rand::random_range;
 
 pub struct MazePlugin;
 
@@ -31,7 +29,7 @@ struct Maze {
     cell_size: f32,
 }
 
-fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>, resolution: Res<Resolution>) {
+fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut maze = Maze {
         root: Entity::PLACEHOLDER,
         grid: vec![vec![Entity::from_raw(0); 10]; 10],
