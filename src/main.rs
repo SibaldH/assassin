@@ -1,6 +1,9 @@
 use bevy::prelude::*;
+use maze::MazePlugin;
+use walls::WallsPlugin;
 
 mod maze;
+mod walls;
 
 fn main() {
     App::new()
@@ -19,8 +22,8 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugins(maze::MazePlugin)
         .add_systems(Startup, setup)
+        .add_plugins((MazePlugin, WallsPlugin))
         .run();
 }
 

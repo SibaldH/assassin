@@ -8,25 +8,25 @@ pub struct MazePlugin;
 impl Plugin for MazePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UpdateTimer(Timer::from_seconds(
-            0.0001,
+            1000.,
             TimerMode::Repeating,
         )));
-        app.add_systems(Startup, (setup_maze, build_maze).chain());
+        app.add_systems(PreStartup, (setup_maze, build_maze).chain());
         app.add_systems(Update, (update_maze, update_arrows));
     }
 }
 
 #[derive(Component)]
-struct MazeNode {
-    position: Vec2,
-    parent: Option<Entity>,
+pub struct MazeNode {
+    pub position: Vec2,
+    pub parent: Option<Entity>,
 }
 
 #[derive(Resource, Debug)]
-struct Maze {
-    root: Entity,
-    grid: Vec<Vec<Entity>>,
-    cell_size: f32,
+pub struct Maze {
+    pub root: Entity,
+    pub grid: Vec<Vec<Entity>>,
+    pub cell_size: f32,
 }
 
 fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -180,8 +180,8 @@ fn update_maze(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Direction {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Direction {
     Up,
     Down,
     Left,
