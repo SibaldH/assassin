@@ -32,7 +32,7 @@ pub struct Maze {
 fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut maze = Maze {
         root: Entity::PLACEHOLDER,
-        grid: vec![vec![Entity::from_raw(0); 10]; 10],
+        grid: vec![vec![Entity::from_raw(0); 15]; 9],
         cell_size: 50.,
     };
 
@@ -51,9 +51,10 @@ fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ..default()
                     },
                     Transform::from_translation(Vec3::new(
-                        x as f32 * maze.cell_size - 10. * 0.5 * maze.cell_size
+                        x as f32 * maze.cell_size
+                            - maze.grid[0].len() as f32 * 0.5 * maze.cell_size
                             + (maze.cell_size * 0.5),
-                        y as f32 * maze.cell_size - 10. * 0.5 * maze.cell_size
+                        y as f32 * maze.cell_size - maze.grid.len() as f32 * 0.5 * maze.cell_size
                             + (maze.cell_size * 0.5),
                         0.0,
                     )),
