@@ -1,6 +1,6 @@
 # Assassin
 
 ## TODO
-- [ ] Fix slow gameplay
+- [x] Fix slow gameplay
 - [ ] Cleanup code 
 - [x] Split MazePlugin
