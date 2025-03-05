@@ -3,11 +3,13 @@ use std::f32::consts::PI;
 
 use crate::maze::{Maze, MazeNode};
 
-pub struct ArrowPlugin;
+pub struct ArrowPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for ArrowPlugin {
+impl<S: States> Plugin for ArrowPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, update_arrows);
+        app.add_systems(Update, update_arrows.run_if(in_state(self.state.clone())));
     }
 }
 

@@ -2,11 +2,13 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use arrow::ArrowPlugin;
+use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use node::NodePlugin;
 use path::PathPlugin;
 
 mod arrow;
+mod gamestate;
 mod maze;
 mod node;
 mod path;
@@ -34,9 +36,21 @@ fn main() {
             TimerMode::Repeating,
         )))
         .add_systems(Startup, setup)
-        .add_plugins(MazePlugin)
-        // .add_plugins((NodePlugin, ArrowPlugin))
-        .add_plugins(PathPlugin)
+        .add_plugins(GameStatePlugin)
+        .add_plugins(MazePlugin {
+            state: GameState::Running,
+        })
+        // .add_plugins((
+        //     NodePlugin {
+        //         state: GameState::Running,
+        //     },
+        //     ArrowPlugin {
+        //         state: GameState::Running,
+        //     },
+        // ))
+        .add_plugins(PathPlugin {
+            state: GameState::Running,
+        })
         .run();
 }
 

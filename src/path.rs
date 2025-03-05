@@ -6,12 +6,14 @@ use crate::{
     MazeUpdateTimer,
 };
 
-pub struct PathPlugin;
+pub struct PathPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for PathPlugin {
+impl<S: States> Plugin for PathPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_path);
-        app.add_systems(Update, update_paths);
+        app.add_systems(Update, update_paths.run_if(in_state(self.state.clone())));
     }
 }
 

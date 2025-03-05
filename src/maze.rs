@@ -3,12 +3,14 @@ use rand::random_range;
 
 use crate::MazeUpdateTimer;
 
-pub struct MazePlugin;
+pub struct MazePlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for MazePlugin {
+impl<S: States> Plugin for MazePlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, (setup_maze, build_maze).chain());
-        app.add_systems(Update, update_maze);
+        app.add_systems(Update, update_maze.run_if(in_state(self.state.clone())));
     }
 }
 

@@ -2,12 +2,14 @@ use bevy::prelude::*;
 
 use crate::maze::{Maze, MazeNode};
 
-pub struct NodePlugin;
+pub struct NodePlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for NodePlugin {
+impl<S: States> Plugin for NodePlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
-        app.add_systems(Update, update_nodes);
+        app.add_systems(Update, update_nodes.run_if(in_state(self.state.clone())));
     }
 }
 
