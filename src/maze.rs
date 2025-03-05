@@ -7,10 +7,7 @@ pub struct MazePlugin;
 
 impl Plugin for MazePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UpdateTimer(Timer::from_seconds(
-            1000.,
-            TimerMode::Repeating,
-        )));
+        app.insert_resource(UpdateTimer(Timer::from_seconds(1., TimerMode::Repeating)));
         app.add_systems(PreStartup, (setup_maze, build_maze).chain());
         app.add_systems(Update, (update_maze, update_arrows));
     }
@@ -133,7 +130,7 @@ fn update_arrows(
 }
 
 #[derive(Resource)]
-struct UpdateTimer(Timer);
+pub struct UpdateTimer(pub Timer);
 
 fn update_maze(
     mut maze: ResMut<Maze>,
@@ -149,7 +146,7 @@ fn update_maze(
     if let Ok((mut root_sprite, mut root_node)) = query.get_mut(root_entity) {
         root_sprite.color = Color::srgb(0.0, 1.0, 0.0);
         let available_dirs =
-            get_available_dir(root_node.position, maze.grid.len(), maze.grid[0].len());
+            get_available_dir(root_node.position, maze.grid[0].len(), maze.grid.len());
 
         if !available_dirs.is_empty() {
             let random_index = random_range(0..available_dirs.len());
