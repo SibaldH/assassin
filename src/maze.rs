@@ -7,32 +7,29 @@ pub struct MazePlugin;
 
 impl Plugin for MazePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UpdateTimer(Timer::from_seconds(
-            0.0001,
-            TimerMode::Repeating,
-        )));
-        app.add_systems(Startup, (setup_maze, build_maze).chain());
+        app.insert_resource(UpdateTimer(Timer::from_seconds(1., TimerMode::Repeating)));
+        app.add_systems(PreStartup, (setup_maze, build_maze).chain());
         app.add_systems(Update, (update_maze, update_arrows));
     }
 }
 
 #[derive(Component)]
-struct MazeNode {
-    position: Vec2,
-    parent: Option<Entity>,
+pub struct MazeNode {
+    pub position: Vec2,
+    pub parent: Option<Entity>,
 }
 
 #[derive(Resource, Debug)]
-struct Maze {
-    root: Entity,
-    grid: Vec<Vec<Entity>>,
-    cell_size: f32,
+pub struct Maze {
+    pub root: Entity,
+    pub grid: Vec<Vec<Entity>>,
+    pub cell_size: f32,
 }
 
 fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut maze = Maze {
         root: Entity::PLACEHOLDER,
-        grid: vec![vec![Entity::from_raw(0); 10]; 10],
+        grid: vec![vec![Entity::from_raw(0); 15]; 9],
         cell_size: 50.,
     };
 
@@ -51,9 +48,10 @@ fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ..default()
                     },
                     Transform::from_translation(Vec3::new(
-                        x as f32 * maze.cell_size - 10. * 0.5 * maze.cell_size
+                        x as f32 * maze.cell_size
+                            - maze.grid[0].len() as f32 * 0.5 * maze.cell_size
                             + (maze.cell_size * 0.5),
-                        y as f32 * maze.cell_size - 10. * 0.5 * maze.cell_size
+                        y as f32 * maze.cell_size - maze.grid.len() as f32 * 0.5 * maze.cell_size
                             + (maze.cell_size * 0.5),
                         0.0,
                     )),
@@ -132,7 +130,7 @@ fn update_arrows(
 }
 
 #[derive(Resource)]
-struct UpdateTimer(Timer);
+pub struct UpdateTimer(pub Timer);
 
 fn update_maze(
     mut maze: ResMut<Maze>,
@@ -148,7 +146,7 @@ fn update_maze(
     if let Ok((mut root_sprite, mut root_node)) = query.get_mut(root_entity) {
         root_sprite.color = Color::srgb(0.0, 1.0, 0.0);
         let available_dirs =
-            get_available_dir(root_node.position, maze.grid.len(), maze.grid[0].len());
+            get_available_dir(root_node.position, maze.grid[0].len(), maze.grid.len());
 
         if !available_dirs.is_empty() {
             let random_index = random_range(0..available_dirs.len());
@@ -180,8 +178,8 @@ fn update_maze(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Direction {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Direction {
     Up,
     Down,
     Left,
