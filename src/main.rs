@@ -1,8 +1,13 @@
 use bevy::prelude::*;
+
+use arrow::ArrowPlugin;
 use maze::MazePlugin;
+use node::NodePlugin;
 use walls::PathPlugin;
 
+mod arrow;
 mod maze;
+mod node;
 mod walls;
 
 fn main() {
@@ -22,11 +27,18 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
+        .insert_resource(MazeUpdateTimer(Timer::from_seconds(
+            0.25,
+            TimerMode::Repeating,
+        )))
         .add_systems(Startup, setup)
-        .add_plugins((MazePlugin, PathPlugin))
+        .add_plugins((MazePlugin, NodePlugin, ArrowPlugin))
         .run();
 }
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
+
+#[derive(Resource)]
+pub struct MazeUpdateTimer(pub Timer);

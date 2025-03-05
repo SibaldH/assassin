@@ -1,15 +1,14 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use rand::random_range;
+
+use crate::MazeUpdateTimer;
 
 pub struct MazePlugin;
 
 impl Plugin for MazePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UpdateTimer(Timer::from_seconds(1., TimerMode::Repeating)));
         app.add_systems(PreStartup, (setup_maze, build_maze).chain());
-        app.add_systems(Update, (update_maze, update_arrows));
+        app.add_systems(Update, update_maze);
     }
 }
 
@@ -26,7 +25,7 @@ pub struct Maze {
     pub cell_size: f32,
 }
 
-fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_maze(mut commands: Commands) {
     let mut maze = Maze {
         root: Entity::PLACEHOLDER,
         grid: vec![vec![Entity::from_raw(0); 15]; 9],
@@ -40,12 +39,6 @@ fn setup_maze(mut commands: Commands, asset_server: Res<AssetServer>) {
                     MazeNode {
                         position: Vec2::new(x as f32, y as f32),
                         parent: None,
-                    },
-                    Sprite {
-                        image: asset_server.load("circle.png"),
-                        custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
-                        color: Color::srgb(0.0, 1.0, 0.0),
-                        ..default()
                     },
                     Transform::from_translation(Vec3::new(
                         x as f32 * maze.cell_size
@@ -88,63 +81,16 @@ fn build_maze(mut maze: ResMut<Maze>, mut query: Query<&mut MazeNode>) {
     maze.root = maze.grid[maze.grid.len() - 1][maze.grid[0].len() - 1];
 }
 
-#[derive(Component)]
-struct Arrow;
-
-fn update_arrows(
-    mut commands: Commands,
-    maze: Res<Maze>,
-    query: Query<(&MazeNode, &Transform)>,
-    asset_server: Res<AssetServer>,
-    arrow_query: Query<Entity, With<Arrow>>,
-) {
-    // Despawn all existing arrows
-    for arrow_entity in arrow_query.iter() {
-        commands.entity(arrow_entity).despawn();
-    }
-
-    let arrow = asset_server.load("arrow.png");
-    for (node, transform) in query.iter() {
-        if let Some(parent) = node.parent {
-            if let Ok((_parent_node, parent_transform)) = query.get(parent) {
-                let direction = parent_transform.translation - transform.translation;
-                let angle = direction.y.atan2(direction.x) - PI / 2.0;
-                let offset = direction.normalize() * maze.cell_size * 0.5;
-
-                commands.spawn((
-                    Sprite {
-                        image: arrow.clone(),
-                        custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
-                        ..default()
-                    },
-                    Transform {
-                        translation: transform.translation + offset,
-                        rotation: Quat::from_rotation_z(angle),
-                        ..default()
-                    },
-                    Arrow,
-                ));
-            }
-        }
-    }
-}
-
-#[derive(Resource)]
-pub struct UpdateTimer(pub Timer);
-
 fn update_maze(
     mut maze: ResMut<Maze>,
-    mut query: Query<(&mut Sprite, &mut MazeNode)>,
+    mut query: Query<&mut MazeNode>,
     time: Res<Time>,
-    mut timer: ResMut<UpdateTimer>,
+    mut timer: ResMut<MazeUpdateTimer>,
 ) {
-    let root_entity = maze.root;
-
     if !timer.0.tick(time.delta()).finished() {
         return;
     }
-    if let Ok((mut root_sprite, mut root_node)) = query.get_mut(root_entity) {
-        root_sprite.color = Color::srgb(0.0, 1.0, 0.0);
+    if let Ok(mut root_node) = query.get_mut(maze.root) {
         let available_dirs =
             get_available_dir(root_node.position, maze.grid[0].len(), maze.grid.len());
 
@@ -168,10 +114,9 @@ fn update_maze(
             root_node.parent = Some(new_root);
 
             {
-                if let Ok((mut new_root_sprite, mut new_root_node)) = query.get_mut(new_root) {
+                if let Ok(mut new_root_node) = query.get_mut(new_root) {
                     new_root_node.parent = None;
                     maze.root = new_root;
-                    new_root_sprite.color = Color::srgb(1.0, 0.0, 0.0);
                 }
             }
         }

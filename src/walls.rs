@@ -2,7 +2,10 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::maze::{Maze, MazeNode, UpdateTimer};
+use crate::{
+    maze::{Maze, MazeNode},
+    MazeUpdateTimer,
+};
 
 pub struct PathPlugin;
 
@@ -125,7 +128,7 @@ fn update_paths(
     mut materials: ResMut<Assets<ColorMaterial>>,
     maze: Res<Maze>,
     time: Res<Time>,
-    mut timer: ResMut<UpdateTimer>,
+    mut timer: ResMut<MazeUpdateTimer>,
 ) {
     if !timer.0.tick(time.delta()).just_finished() {
         return;
