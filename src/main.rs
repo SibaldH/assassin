@@ -13,6 +13,9 @@ mod maze;
 mod node;
 mod path;
 
+const MAZE_WIDTH: f32 = 50.0;
+const MAZE_HEIGHT: f32 = 50.0;
+
 fn main() {
     App::new()
         .add_plugins((
@@ -35,6 +38,7 @@ fn main() {
             0.00001,
             TimerMode::Repeating,
         )))
+        .insert_resource(MazeShape(Vec2::new(MAZE_WIDTH, MAZE_HEIGHT)))
         .add_systems(Startup, setup)
         .add_plugins(GameStatePlugin)
         .add_plugins(MazePlugin {
@@ -57,6 +61,9 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
+
+#[derive(Resource)]
+pub struct MazeShape(pub Vec2);
 
 #[derive(Resource)]
 pub struct MazeUpdateTimer(pub Timer);
