@@ -1,18 +1,19 @@
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
 
 use arrow::ArrowPlugin;
 use maze::MazePlugin;
 use node::NodePlugin;
-use walls::PathPlugin;
+use path::PathPlugin;
 
 mod arrow;
 mod maze;
 mod node;
-mod walls;
+mod path;
 
 fn main() {
     App::new()
-        .add_plugins(
+        .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -26,13 +27,16 @@ fn main() {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-        )
+            ShapePlugin,
+        ))
         .insert_resource(MazeUpdateTimer(Timer::from_seconds(
-            0.25,
+            0.00001,
             TimerMode::Repeating,
         )))
         .add_systems(Startup, setup)
-        .add_plugins((MazePlugin, NodePlugin, ArrowPlugin))
+        .add_plugins(MazePlugin)
+        // .add_plugins((NodePlugin, ArrowPlugin))
+        .add_plugins(PathPlugin)
         .run();
 }
 

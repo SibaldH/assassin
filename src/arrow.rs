@@ -41,7 +41,11 @@ fn update_arrows(
                         ..default()
                     },
                     Transform {
-                        translation: transform.translation + offset,
+                        translation: Vec3::new(
+                            transform.translation.x,
+                            transform.translation.y,
+                            2.0,
+                        ) + offset,
                         rotation: Quat::from_rotation_z(angle),
                         ..default()
                     },

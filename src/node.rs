@@ -28,7 +28,7 @@ fn setup(
                 custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
                 ..default()
             },
-            Transform::from_translation(transform.translation),
+            Transform::from_xyz(transform.translation.x, transform.translation.y, 2.0),
             NodeCircle,
         ));
     }
@@ -62,7 +62,7 @@ fn update_nodes(
 
         commands.spawn((
             sprite,
-            Transform::from_translation(transform.translation),
+            Transform::from_xyz(transform.translation.x, transform.translation.y, 2.0),
             NodeCircle,
         ));
     }
