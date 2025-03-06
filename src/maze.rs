@@ -89,7 +89,7 @@ fn update_maze(
     time: Res<Time>,
     mut timer: ResMut<MazeUpdateTimer>,
 ) {
-    if !timer.0.tick(time.delta()).finished() {
+    if !timer.0.tick(time.delta()).just_finished() {
         return;
     }
     if let Ok(mut root_node) = query.get_mut(maze.root) {

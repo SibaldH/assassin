@@ -40,7 +40,7 @@ fn main() {
             node_color: Color::srgb(0.0, 1.0, 0.0),
         })
         .insert_resource(MazeUpdateTimer(Timer::from_seconds(
-            0.00001,
+            0.125,
             TimerMode::Repeating,
         )))
         .add_systems(Startup, setup)
