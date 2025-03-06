@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    color::MazeColor,
     maze::{Maze, MazeNode},
+    maze_specs::MazeColor,
 };
 
 pub struct NodePlugin<S: States> {

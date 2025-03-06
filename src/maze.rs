@@ -1,7 +1,9 @@
+use std::cmp::min;
+
 use bevy::prelude::*;
 use rand::random_range;
 
-use crate::MazeUpdateTimer;
+use crate::{maze_specs::MazeShape, MazeUpdateTimer};
 
 pub struct MazePlugin<S: States> {
     pub state: S,
@@ -27,11 +29,18 @@ pub struct Maze {
     pub cell_size: f32,
 }
 
-fn setup_maze(mut commands: Commands) {
+fn setup_maze(mut commands: Commands, shape: Res<MazeShape>, window: Query<&Window>) {
+    let window = window.single();
+
+    let cell_size = min(
+        (window.width() / shape.0.x) as i32,
+        (window.height() / shape.0.y) as i32,
+    ) as f32;
+
     let mut maze = Maze {
         root: Entity::PLACEHOLDER,
-        grid: vec![vec![Entity::from_raw(0); 15]; 9],
-        cell_size: 50.,
+        grid: vec![vec![Entity::from_raw(0); shape.0.x as usize]; shape.0.y as usize],
+        cell_size,
     };
 
     for y in 0..maze.grid.len() {
