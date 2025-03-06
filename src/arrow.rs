@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
-use crate::maze::{Maze, MazeNode};
+use crate::{
+    color::MazeColor,
+    maze::{Maze, MazeNode},
+};
 
 pub struct ArrowPlugin<S: States> {
     pub state: S,
@@ -19,6 +22,7 @@ struct Arrow;
 fn update_arrows(
     mut commands: Commands,
     maze: Res<Maze>,
+    color: Res<MazeColor>,
     query: Query<(&MazeNode, &Transform)>,
     asset_server: Res<AssetServer>,
     arrow_query: Query<Entity, With<Arrow>>,
@@ -40,6 +44,7 @@ fn update_arrows(
                     Sprite {
                         image: arrow.clone(),
                         custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
+                        color: color.node_color,
                         ..default()
                     },
                     Transform {

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use crate::{
+    color::MazeColor,
     maze::{Maze, MazeNode},
     MazeUpdateTimer,
 };
@@ -18,13 +19,11 @@ impl<S: States> Plugin for PathPlugin<S> {
 }
 
 const RADIUS_RATIO: f32 = 8.0;
-const WALL_COLOR: Color = Color::srgb(1.0, 1.0, 1.0);
-const PATH_COLOR: Color = Color::srgb(0.2, 0.2, 0.2); //grey
 
 #[derive(Component)]
 struct Path;
 
-fn setup_path(mut commands: Commands, maze: Res<Maze>) {
+fn setup_path(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
     // draw a border around the maze
     let points: Vec<Vec2> = vec![
         Vec2::new(0., 0.),
@@ -52,7 +51,7 @@ fn setup_path(mut commands: Commands, maze: Res<Maze>) {
             )),
             ..default()
         },
-        Fill::color(WALL_COLOR),
+        Fill::color(color.wall_color),
     ));
 }
 
@@ -62,6 +61,7 @@ fn update_paths(
     node_query: Query<&MazeNode>,
     sprite_query: Query<Entity, With<Path>>,
     maze: Res<Maze>,
+    color: Res<MazeColor>,
     time: Res<Time>,
     mut timer: ResMut<MazeUpdateTimer>,
 ) {
@@ -185,7 +185,7 @@ fn update_paths(
                 transform: Transform::from_translation(node_translation),
                 ..default()
             },
-            Fill::color(PATH_COLOR),
+            Fill::color(color.path_color),
             Path,
         ));
     }

@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::maze::{Maze, MazeNode};
+use crate::{
+    color::MazeColor,
+    maze::{Maze, MazeNode},
+};
 
 pub struct NodePlugin<S: States> {
     pub state: S,
@@ -21,6 +24,7 @@ fn setup(
     asset_server: Res<AssetServer>,
     query: Query<(&MazeNode, &Transform)>,
     maze: Res<Maze>,
+    color: Res<MazeColor>,
 ) {
     let circle = asset_server.load("circle.png");
     for (_node, transform) in query.iter() {
@@ -28,6 +32,7 @@ fn setup(
             Sprite {
                 image: circle.clone(),
                 custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
+                color: color.node_color,
                 ..default()
             },
             Transform::from_xyz(transform.translation.x, transform.translation.y, 2.0),
@@ -42,6 +47,7 @@ fn update_nodes(
     query: Query<(&Sprite, Entity), With<NodeCircle>>,
     maze_query: Query<(&MazeNode, &Transform, Entity)>,
     maze: Res<Maze>,
+    color: Res<MazeColor>,
 ) {
     // Despawn all existing nodes
     for (_, entity) in query.iter() {
@@ -54,12 +60,13 @@ fn update_nodes(
         let mut sprite = Sprite {
             image: circle.clone(),
             custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
+            color: color.node_color,
             ..default()
         };
 
         // Turn the root node red
         if entity == maze.root {
-            sprite.color = Color::srgb(1.0, 0.0, 0.0);
+            sprite.color = color.root_color;
         }
 
         commands.spawn((
