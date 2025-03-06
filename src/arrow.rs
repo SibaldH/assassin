@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use std::f32::consts::PI;
 
 use crate::{
-    color::MazeColor,
     maze::{Maze, MazeNode},
+    maze_specs::MazeColor,
 };
 
 pub struct ArrowPlugin<S: States> {

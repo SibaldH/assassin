@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use crate::{
-    color::MazeColor,
     maze::{Maze, MazeNode},
+    maze_specs::MazeColor,
     MazeUpdateTimer,
 };
 

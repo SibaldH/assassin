@@ -2,16 +2,16 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use arrow::ArrowPlugin;
-use color::MazeColor;
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
+use maze_specs::{MazeColor, MazeShape};
 use node::NodePlugin;
 use path::PathPlugin;
 
 mod arrow;
-mod color;
 mod gamestate;
 mod maze;
+mod maze_specs;
 mod node;
 mod path;
 
@@ -39,6 +39,7 @@ fn main() {
             root_color: Color::srgb(1.0, 0.0, 0.0),
             node_color: Color::srgb(0.0, 1.0, 0.0),
         })
+        .insert_resource(MazeShape(Vec2::new(15., 15.)))
         .insert_resource(MazeUpdateTimer(Timer::from_seconds(
             0.125,
             TimerMode::Repeating,

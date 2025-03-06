@@ -7,3 +7,6 @@ pub struct MazeColor {
     pub root_color: Color,
     pub node_color: Color,
 }
+
+#[derive(Resource)]
+pub struct MazeShape(pub Vec2);
