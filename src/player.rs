@@ -11,6 +11,9 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct Player;
+
 fn spawn_player(mut commands: Commands, maze: Res<Maze>) {
     let shape = shapes::Rectangle {
         extents: Vec2::new(maze.cell_size * 0.3, maze.cell_size * 0.3),
@@ -25,5 +28,6 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>) {
             ..default()
         },
         Fill::color(Color::srgb(1., 0., 0.)),
+        Player,
     ));
 }

@@ -2,6 +2,11 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use arrow::ArrowPlugin;
+use bevy_rapier2d::{
+    plugin::{NoUserData, RapierPhysicsPlugin},
+    render::RapierDebugRenderPlugin,
+};
+use fog::FogPlugin;
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
@@ -10,6 +15,7 @@ use path::PathPlugin;
 use player::PlayerPlugin;
 
 mod arrow;
+mod fog;
 mod gamestate;
 mod maze;
 mod maze_specs;
@@ -34,23 +40,25 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
             ShapePlugin,
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.),
+            RapierDebugRenderPlugin::default(),
         ))
-        .insert_resource(MazeColor {
-            path_color: Color::srgb(0.2, 0.2, 0.2),
-            wall_color: Color::srgb(0.8, 0.8, 0.8),
-            root_color: Color::srgb(1.0, 0.0, 0.0),
-            node_color: Color::srgb(0.0, 1.0, 0.0),
-        })
-        .insert_resource(MazeShape(Vec2::new(15., 15.)))
-        .insert_resource(MazeUpdateTimer(Timer::from_seconds(
-            0.0125,
-            TimerMode::Repeating,
-        )))
         .add_systems(Startup, setup)
-        .add_plugins(GameStatePlugin)
-        .add_plugins(MazePlugin {
-            state: GameState::Running,
-        })
+        // .insert_resource(MazeColor {
+        //     path_color: Color::srgb(0.2, 0.2, 0.2),
+        //     wall_color: Color::srgb(0.8, 0.8, 0.8),
+        //     root_color: Color::srgb(1.0, 0.0, 0.0),
+        //     node_color: Color::srgb(0.0, 1.0, 0.0),
+        // })
+        // .insert_resource(MazeShape(Vec2::new(15., 15.)))
+        // .insert_resource(MazeUpdateTimer(Timer::from_seconds(
+        //     0.0125,
+        //     TimerMode::Repeating,
+        // )))
+        // .add_plugins(GameStatePlugin)
+        // .add_plugins(MazePlugin {
+        //     state: GameState::Running,
+        // })
         // .add_plugins((
         //     NodePlugin {
         //         state: GameState::Running,
@@ -59,10 +67,13 @@ fn main() {
         //         state: GameState::Running,
         //     },
         // ))
-        .add_plugins(PathPlugin {
+        // .add_plugins(PathPlugin {
+        //     state: GameState::Running,
+        // })
+        // .add_plugins(PlayerPlugin)
+        .add_plugins(FogPlugin {
             state: GameState::Running,
         })
-        .add_plugins(PlayerPlugin)
         .run();
 }
 
