@@ -7,6 +7,7 @@ use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
 use node::NodePlugin;
 use path::PathPlugin;
+use player::PlayerPlugin;
 
 mod arrow;
 mod gamestate;
@@ -14,6 +15,7 @@ mod maze;
 mod maze_specs;
 mod node;
 mod path;
+mod player;
 
 fn main() {
     App::new()
@@ -41,7 +43,7 @@ fn main() {
         })
         .insert_resource(MazeShape(Vec2::new(15., 15.)))
         .insert_resource(MazeUpdateTimer(Timer::from_seconds(
-            0.125,
+            0.0125,
             TimerMode::Repeating,
         )))
         .add_systems(Startup, setup)
@@ -49,17 +51,18 @@ fn main() {
         .add_plugins(MazePlugin {
             state: GameState::Running,
         })
-        .add_plugins((
-            NodePlugin {
-                state: GameState::Running,
-            },
-            ArrowPlugin {
-                state: GameState::Running,
-            },
-        ))
+        // .add_plugins((
+        //     NodePlugin {
+        //         state: GameState::Running,
+        //     },
+        //     ArrowPlugin {
+        //         state: GameState::Running,
+        //     },
+        // ))
         .add_plugins(PathPlugin {
             state: GameState::Running,
         })
+        .add_plugins(PlayerPlugin)
         .run();
 }
 
