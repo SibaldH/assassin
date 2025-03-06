@@ -13,8 +13,8 @@ mod maze;
 mod node;
 mod path;
 
-const MAZE_WIDTH: f32 = 50.0;
-const MAZE_HEIGHT: f32 = 50.0;
+const MAZE_WIDTH: f32 = 15.0;
+const MAZE_HEIGHT: f32 = 15.0;
 
 fn main() {
     App::new()
@@ -44,14 +44,14 @@ fn main() {
         .add_plugins(MazePlugin {
             state: GameState::Running,
         })
-        // .add_plugins((
-        //     NodePlugin {
-        //         state: GameState::Running,
-        //     },
-        //     ArrowPlugin {
-        //         state: GameState::Running,
-        //     },
-        // ))
+        .add_plugins((
+            NodePlugin {
+                state: GameState::Running,
+            },
+            ArrowPlugin {
+                state: GameState::Running,
+            },
+        ))
         .add_plugins(PathPlugin {
             state: GameState::Running,
         })

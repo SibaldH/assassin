@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
 
 use crate::maze::{Maze, MazeNode};
 
@@ -13,24 +14,27 @@ impl<S: States> Plugin for NodePlugin<S> {
     }
 }
 
+const CIRCLE_RADIUS_RATIO: f32 = 8.0;
+
 #[derive(Component)]
 struct NodeCircle;
 
-fn setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    query: Query<(&MazeNode, &Transform)>,
-    maze: Res<Maze>,
-) {
-    let circle = asset_server.load("circle.png");
-    for (_node, transform) in query.iter() {
+#[derive(Component)]
+struct RootNodeCircle;
+
+fn setup(mut commands: Commands, query: Query<&Transform>, maze: Res<Maze>) {
+    let radius = maze.cell_size / CIRCLE_RADIUS_RATIO;
+    for transform in query.iter() {
+        let shape = shapes::Circle {
+            center: Vec2::new(transform.translation.x, transform.translation.y),
+            radius,
+        };
         commands.spawn((
-            Sprite {
-                image: circle.clone(),
-                custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
+            ShapeBundle {
+                path: GeometryBuilder::build_as(&shape),
                 ..default()
             },
-            Transform::from_xyz(transform.translation.x, transform.translation.y, 2.0),
+            Fill::color(Color::srgb(0.0, 0.8, 0.0)),
             NodeCircle,
         ));
     }
@@ -38,34 +42,29 @@ fn setup(
 
 fn update_nodes(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    query: Query<(&Sprite, Entity), With<NodeCircle>>,
-    maze_query: Query<(&MazeNode, &Transform, Entity)>,
     maze: Res<Maze>,
+    query: Query<Entity, With<RootNodeCircle>>,
+    node_query: Query<(&MazeNode, &Transform)>,
 ) {
-    // Despawn all existing nodes
-    for (_, entity) in query.iter() {
+    //Despawn root node circle
+    for entity in query.iter() {
         commands.entity(entity).despawn();
     }
 
-    // Spawn new nodes
-    let circle = asset_server.load("circle.png");
-    for (_node, transform, entity) in maze_query.iter() {
-        let mut sprite = Sprite {
-            image: circle.clone(),
-            custom_size: Some(Vec2::splat(maze.cell_size * 0.25)),
-            ..default()
+    let root_entity = maze.root;
+    if let Ok((_root_node, root_transform)) = node_query.get(root_entity) {
+        let radius = maze.cell_size / CIRCLE_RADIUS_RATIO;
+        let shape = shapes::Circle {
+            radius,
+            center: Vec2::new(root_transform.translation.x, root_transform.translation.y),
         };
-
-        // Turn the root node red
-        if entity == maze.root {
-            sprite.color = Color::srgb(1.0, 0.0, 0.0);
-        }
-
         commands.spawn((
-            sprite,
-            Transform::from_xyz(transform.translation.x, transform.translation.y, 2.0),
-            NodeCircle,
+            ShapeBundle {
+                path: GeometryBuilder::build_as(&shape),
+                ..default()
+            },
+            Fill::color(Color::srgb(1.0, 0.0, 0.0)),
+            RootNodeCircle,
         ));
     }
 }

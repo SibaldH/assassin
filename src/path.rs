@@ -65,9 +65,9 @@ fn update_paths(
     time: Res<Time>,
     mut timer: ResMut<MazeUpdateTimer>,
 ) {
-    if !timer.0.tick(time.delta()).just_finished() {
-        return;
-    }
+    // if !timer.0.tick(time.delta()).just_finished() {
+    //     return;
+    // }
 
     // Despawn all existing paths
     for path_entity in sprite_query.iter() {
