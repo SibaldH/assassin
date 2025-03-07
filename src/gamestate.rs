@@ -11,8 +11,8 @@ impl Plugin for GameStatePlugin {
 
 #[derive(States, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
-    Running,
     #[default]
+    Running,
     Paused,
 }
 

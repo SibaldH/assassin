@@ -8,31 +8,45 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player);
+        app.insert_resource(SpawnPlayerTimer(Timer::from_seconds(3., TimerMode::Once)));
+        app.add_systems(Update, spawn_player);
     }
 }
 
 #[derive(Component)]
 pub struct Player;
 
-fn spawn_player(mut commands: Commands, maze: Res<Maze>) {
+#[derive(Resource)]
+struct SpawnPlayerTimer(Timer);
+
+fn spawn_player(
+    mut commands: Commands,
+    maze: Res<Maze>,
+    positions: Query<&Transform, With<Player>>,
+    time: Res<Time>,
+    mut timer: ResMut<SpawnPlayerTimer>,
+) {
+    if !timer.0.tick(time.delta()).just_finished() {
+        return;
+    }
     commands.spawn((
         RigidBody::Dynamic,
         Transform::from_xyz(0., 0., 10.),
         Velocity {
-            linvel: Vec2::new(0., 10.),
-            angvel: 0.2,
+            linvel: Vec2::new(0., 0.),
+            angvel: 0.,
         },
-        GravityScale(1.),
+        GravityScale(0.),
         Sleeping::disabled(),
         Ccd::enabled(),
         Collider::ball(maze.cell_size * 0.2),
         ColliderMassProperties::Density(2.0),
+        Player,
     ));
-
-    commands.spawn((
-        RigidBody::Fixed,
-        Transform::from_xyz(0., 0., 0.),
-        Collider::cuboid(maze.cell_size, maze.cell_size),
-    ));
+    for position in positions.iter() {
+        println!(
+            "Player position:\n\tx: {}\n\ty: {}",
+            position.translation.x, position.translation.y
+        );
+    }
 }

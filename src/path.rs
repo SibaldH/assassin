@@ -54,6 +54,13 @@ fn setup_path(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
         },
         Fill::color(color.wall_color),
     ));
+    commands.spawn((
+        Collider::cuboid(
+            maze.grid[0].len() as f32 * maze.cell_size / 2.,
+            maze.grid.len() as f32 * maze.cell_size / 2.,
+        ),
+        RigidBody::Fixed,
+    ));
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -175,6 +182,14 @@ fn update_paths(
                 vec![]
             }
         };
+        commands.spawn((
+            RigidBody::Fixed,
+            Collider::convex_hull(&points).unwrap(),
+            Transform::from_translation(node_translation),
+            Sensor,
+            Path,
+        ));
+
         let shape = shapes::RoundedPolygon {
             points: points.into_iter().collect(),
             closed: false,
