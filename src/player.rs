@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::maze::Maze;
 
@@ -15,19 +16,23 @@ impl Plugin for PlayerPlugin {
 pub struct Player;
 
 fn spawn_player(mut commands: Commands, maze: Res<Maze>) {
-    let shape = shapes::Rectangle {
-        extents: Vec2::new(maze.cell_size * 0.3, maze.cell_size * 0.3),
-        origin: RectangleOrigin::Center,
-        ..default()
-    };
+    commands.spawn((
+        RigidBody::Dynamic,
+        Transform::from_xyz(0., 0., 10.),
+        Velocity {
+            linvel: Vec2::new(0., 10.),
+            angvel: 0.2,
+        },
+        GravityScale(1.),
+        Sleeping::disabled(),
+        Ccd::enabled(),
+        Collider::ball(maze.cell_size * 0.2),
+        ColliderMassProperties::Density(2.0),
+    ));
 
     commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shape),
-            transform: Transform::from_translation(Vec3::new(0., 0., 100.)),
-            ..default()
-        },
-        Fill::color(Color::srgb(1., 0., 0.)),
-        Player,
+        RigidBody::Fixed,
+        Transform::from_xyz(0., 0., 0.),
+        Collider::cuboid(maze.cell_size, maze.cell_size),
     ));
 }

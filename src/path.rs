@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::{
     maze::{Maze, MazeNode},
