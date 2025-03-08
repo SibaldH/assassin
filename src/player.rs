@@ -9,7 +9,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SpawnPlayerTimer(Timer::from_seconds(3., TimerMode::Once)));
-        app.add_systems(Update, spawn_player);
+        app.add_systems(Update, (spawn_player, log_entities));
     }
 }
 
@@ -48,5 +48,36 @@ fn spawn_player(
             "Player position:\n\tx: {}\n\ty: {}",
             position.translation.x, position.translation.y
         );
+    }
+}
+
+fn log_entities(
+    window: Query<&Window>,
+    cameras: Query<(&Camera, &GlobalTransform)>,
+    entities: Query<(Entity, &GlobalTransform)>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    maze: Res<Maze>,
+) {
+    let window = window.single();
+
+    if let Some(cursor_pos) = window.cursor_position() {
+        if mouse.pressed(MouseButton::Left) {
+            if let Ok((camera, camera_transform)) = cameras.get_single() {
+                let world_pos = camera
+                    .viewport_to_world_2d(camera_transform, cursor_pos)
+                    .unwrap_or(Vec2::ZERO);
+
+                info!("Cursor pos: {:#?}", world_pos);
+
+                for (entity, transform) in entities.iter() {
+                    let entity_pos = transform.translation().truncate();
+
+                    let hit_radius = maze.cell_size * 0.4;
+                    if entity_pos.distance(world_pos) < hit_radius {
+                        info!("Hit entity: {:#?}", entity);
+                    }
+                }
+            }
+        };
     }
 }

@@ -186,7 +186,6 @@ fn update_paths(
             RigidBody::Fixed,
             Collider::convex_hull(&points).unwrap(),
             Transform::from_translation(node_translation),
-            Sensor,
             Path,
         ));
 
