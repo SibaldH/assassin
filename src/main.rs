@@ -6,7 +6,7 @@ use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
-use fog::FogPlugin;
+use fog::{FogPlugin, VisibilityMap};
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};

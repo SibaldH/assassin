@@ -31,7 +31,7 @@ const RADIUS_RATIO: f32 = 8.0;
 struct SidePath;
 
 #[derive(Component)]
-struct PathCollider;
+struct Wall;
 
 #[derive(Component, Debug)]
 pub struct Path;
@@ -267,7 +267,7 @@ fn setup_colliders(maze: Res<Maze>, mut commands: Commands, node_query: Query<&M
 }
 
 fn spawn_colliders(
-    path_colliders: Query<Entity, With<PathCollider>>,
+    path_colliders: Query<Entity, With<Wall>>,
     maze: Res<Maze>,
     mut commands: Commands,
     node_query: Query<&MazeNode>,
@@ -317,7 +317,7 @@ fn spawn_colliders(
                         + maze.cell_size * num_y,
                     0.,
                 )),
-                PathCollider,
+                Wall,
             ));
         }
     }
@@ -325,7 +325,7 @@ fn spawn_colliders(
 
 fn remove_colliders(
     mut commands: Commands,
-    path_colliders: Query<(Entity, &Transform), With<PathCollider>>,
+    path_colliders: Query<(Entity, &Transform), With<Wall>>,
     maze: Res<Maze>,
     node_query: Query<&MazeNode>,
 ) {

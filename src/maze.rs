@@ -28,6 +28,7 @@ pub struct Maze {
     pub grid: Vec<Vec<Entity>>,
     pub cell_size: f32,
     pub path_thickness: f32,
+    pub view_distance: f32,
 }
 
 fn setup_maze(mut commands: Commands, shape: Res<MazeShape>, window: Query<&Window>) {
@@ -43,6 +44,7 @@ fn setup_maze(mut commands: Commands, shape: Res<MazeShape>, window: Query<&Wind
         grid: vec![vec![Entity::from_raw(0); shape.0.x as usize]; shape.0.y as usize],
         cell_size,
         path_thickness: cell_size * 0.8,
+        view_distance: cell_size * 3.0,
     };
 
     for y in 0..maze.grid.len() {
