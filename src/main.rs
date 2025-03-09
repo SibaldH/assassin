@@ -11,8 +11,8 @@ use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
 use node::NodePlugin;
-use path::PathPlugin;
 use player::PlayerPlugin;
+use walls::WallPlugin;
 
 mod arrow;
 mod fog;
@@ -20,8 +20,8 @@ mod gamestate;
 mod maze;
 mod maze_specs;
 mod node;
-mod path;
 mod player;
+mod walls;
 
 fn main() {
     App::new()
@@ -49,6 +49,7 @@ fn main() {
             wall_color: Color::srgb(0.8, 0.8, 0.8),
             root_color: Color::srgb(1.0, 0.0, 0.0),
             node_color: Color::srgb(0.0, 1.0, 0.0),
+            player_color: Color::srgb(0.0, 0.0, 1.0),
         })
         .insert_resource(MazeShape(Vec2::new(15., 15.)))
         .insert_resource(MazeUpdateTimer(Timer::from_seconds(
@@ -67,7 +68,7 @@ fn main() {
         //         state: GameState::Running,
         //     },
         // ))
-        .add_plugins(PathPlugin {
+        .add_plugins(WallPlugin {
             state: GameState::Running,
         })
         .add_plugins(PlayerPlugin)

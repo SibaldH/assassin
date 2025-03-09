@@ -6,6 +6,7 @@ pub struct MazeColor {
     pub wall_color: Color,
     pub root_color: Color,
     pub node_color: Color,
+    pub player_color: Color,
 }
 
 #[derive(Resource)]
