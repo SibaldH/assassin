@@ -163,12 +163,7 @@ fn update_paths(
     }
 }
 
-fn setup_colliders(
-    path_colliders: Query<Entity, With<PathCollider>>,
-    maze: Res<Maze>,
-    mut commands: Commands,
-    node_query: Query<&MazeNode>,
-) {
+fn setup_colliders(maze: Res<Maze>, mut commands: Commands, node_query: Query<&MazeNode>) {
     commands.spawn((
         Collider::cuboid(maze.grid[0].len() as f32 * maze.cell_size * 0.5, 1.),
         Transform::from_translation(Vec3::new(
@@ -185,6 +180,24 @@ fn setup_colliders(
             0.,
             maze.grid.len() as f32 * maze.cell_size * -0.5 - 1.
                 + (maze.cell_size - maze.path_thickness) * 0.5,
+            0.,
+        )),
+    ));
+    commands.spawn((
+        Collider::cuboid(1., maze.grid.len() as f32 * maze.cell_size * 0.5),
+        Transform::from_translation(Vec3::new(
+            maze.grid[0].len() as f32 * maze.cell_size * 0.5 + 1.
+                - (maze.cell_size - maze.path_thickness) * 0.5,
+            0.,
+            0.,
+        )),
+    ));
+    commands.spawn((
+        Collider::cuboid(1., maze.grid.len() as f32 * maze.cell_size * 0.5),
+        Transform::from_translation(Vec3::new(
+            maze.grid[0].len() as f32 * maze.cell_size * -0.5 - 1.
+                + (maze.cell_size - maze.path_thickness) * 0.5,
+            0.,
             0.,
         )),
     ));
