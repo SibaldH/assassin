@@ -72,7 +72,6 @@ fn setup_walls(
                 + (maze.cell_size - maze.path_thickness) * 0.5,
             (maze.cell_size - maze.path_thickness) * 0.5,
         ),
-        RigidBody::Fixed,
     ));
 
     // Lower border
