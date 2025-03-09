@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::maze::Maze;
+use crate::{maze::Maze, maze_specs::MazeColor};
 
 pub struct PlayerPlugin;
 
@@ -15,10 +16,18 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct Player;
 
-fn spawn_player(mut commands: Commands, maze: Res<Maze>) {
+fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
     commands.spawn((
         RigidBody::KinematicPositionBased,
-        Transform::from_xyz(0., 0., 10.),
+        ShapeBundle {
+            path: GeometryBuilder::build_as(&shapes::Circle {
+                radius: maze.cell_size * 0.2,
+                ..default()
+            }),
+            transform: Transform::from_xyz(0., 0., 10.),
+            ..default()
+        },
+        Fill::color(color.player_color),
         Velocity {
             linvel: Vec2::new(0., 0.),
             angvel: 0.,
