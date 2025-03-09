@@ -52,5 +52,9 @@ fn update_player(
         movement.x += 1.;
     }
 
+    if movement.length() > 0. {
+        movement = movement.normalize() * 2.;
+    }
+
     controller.translation = Some(movement);
 }
