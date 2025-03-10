@@ -63,14 +63,14 @@ fn main() {
         .add_plugins(MazePlugin {
             state: GameState::Running,
         })
-        // .add_plugins((
-        //     NodePlugin {
-        //         state: GameState::Running,
-        //     },
-        //     ArrowPlugin {
-        //         state: GameState::Running,
-        //     },
-        // ))
+        .add_plugins((
+            NodePlugin {
+                state: GameState::Running,
+            },
+            ArrowPlugin {
+                state: GameState::Running,
+            },
+        ))
         .add_plugins(WallPlugin {
             state: GameState::Running,
         })
