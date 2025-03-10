@@ -2,25 +2,21 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use iyes_perf_ui::prelude::*;
 
-use arrow::ArrowPlugin;
 use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
-use fog::{FogPlugin, VisibilityMap};
+use fog::FogPlugin;
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
-use node::NodePlugin;
 use player::PlayerPlugin;
 use walls::WallPlugin;
 
-mod arrow;
 mod fog;
 mod gamestate;
 mod maze;
 mod maze_specs;
-mod node;
 mod player;
 mod walls;
 
@@ -63,14 +59,6 @@ fn main() {
         .add_plugins(MazePlugin {
             state: GameState::Running,
         })
-        // .add_plugins((
-        //     NodePlugin {
-        //         state: GameState::Running,
-        //     },
-        //     ArrowPlugin {
-        //         state: GameState::Running,
-        //     },
-        // ))
         .add_plugins(WallPlugin {
             state: GameState::Running,
         })
