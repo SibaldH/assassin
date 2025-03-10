@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use iyes_perf_ui::prelude::*;
 
 use arrow::ArrowPlugin;
 use bevy_rapier2d::{
@@ -42,6 +43,8 @@ fn main() {
             ShapePlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.),
             RapierDebugRenderPlugin::default(),
+            bevy::diagnostic::FrameTimeDiagnosticsPlugin,
+            PerfUiPlugin,
         ))
         .add_systems(Startup, setup)
         .insert_resource(MazeColor {
@@ -80,6 +83,16 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
+    commands.spawn((
+        PerfUiRoot {
+            display_labels: false,
+            layout_horizontal: true,
+            values_col_width: 32.0,
+            ..default()
+        },
+        PerfUiEntryFPSWorst::default(),
+        PerfUiEntryFPS::default(),
+    ));
 }
 
 #[derive(Resource)]

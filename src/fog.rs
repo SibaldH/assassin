@@ -36,7 +36,6 @@ fn update_visibility_map(
     player_query: Query<(Entity, &Transform), With<Player>>,
     rapier_context: WriteRapierContext,
     maze: Res<Maze>,
-    mut gizmos: Gizmos,
 ) {
     let (player_entity, player_transform) = player_query.single();
     let player_pos = player_transform.translation.truncate(); // 2D position
@@ -58,11 +57,9 @@ fn update_visibility_map(
         ) {
             let hit_point = player_pos + direction * toi;
             visibility_map.visible_points.push(hit_point);
-            gizmos.line_2d(player_pos, hit_point, Color::srgb(1.0, 0.0, 0.0));
         } else {
             let visible_point = player_pos + direction * maze.view_distance;
             visibility_map.visible_points.push(visible_point);
-            gizmos.line_2d(player_pos, visible_point, Color::srgb(0.0, 1.0, 0.0));
         }
     }
 }
