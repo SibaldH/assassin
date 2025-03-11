@@ -14,17 +14,14 @@ pub struct WallPlugin<S: States> {
 impl<S: States> Plugin for WallPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_walls);
-        app.add_systems(
-            Update,
-            (spawn_colliders, remove_colliders)
-                .chain()
-                .run_if(in_state(self.state.clone())),
-        );
+        app.add_systems(Update, (spawn_colliders, remove_colliders).chain());
     }
 }
 
 #[derive(Component)]
-struct PathCollider;
+pub struct Wall {
+    pub direction: Vec2,
+}
 
 fn setup_walls(
     maze: Res<Maze>,
@@ -190,13 +187,12 @@ fn setup_walls(
 }
 
 fn spawn_colliders(
-    path_colliders: Query<Entity, With<PathCollider>>,
+    wall_colliders: Query<Entity, With<Wall>>,
     maze: Res<Maze>,
     mut commands: Commands,
     node_query: Query<&MazeNode>,
-    color: Res<MazeColor>,
 ) {
-    for entity in path_colliders.iter() {
+    for entity in wall_colliders.iter() {
         commands.entity(entity).despawn();
     }
 
@@ -231,31 +227,7 @@ fn spawn_colliders(
                 0. => 0.5,
                 _ => 0.,
             };
-            let shape = shapes::Rectangle {
-                extents: Vec2::new(
-                    (maze.cell_size - maze.path_thickness) * direction.x
-                        + maze.path_thickness * direction.y,
-                    (maze.cell_size - maze.path_thickness) * direction.y
-                        + maze.path_thickness * direction.x,
-                ),
-                ..default()
-            };
-
             commands.spawn((
-                ShapeBundle {
-                    path: GeometryBuilder::build_as(&shape),
-                    transform: Transform::from_translation(Vec3::new(
-                        node.position.x * maze.cell_size
-                            - maze.grid[0].len() as f32 * maze.cell_size * 0.5
-                            + maze.cell_size * num_x,
-                        node.position.y * maze.cell_size
-                            - maze.grid.len() as f32 * maze.cell_size * 0.5
-                            + maze.cell_size * num_y,
-                        0.,
-                    )),
-                    ..default()
-                },
-                Fill::color(color.wall_color),
                 Collider::cuboid(
                     ((maze.cell_size - maze.path_thickness) * direction.x
                         + maze.path_thickness * direction.y)
@@ -264,7 +236,18 @@ fn spawn_colliders(
                         + maze.path_thickness * direction.x)
                         * 0.5,
                 ),
-                PathCollider,
+                Transform::from_translation(Vec3::new(
+                    node.position.x * maze.cell_size
+                        - maze.grid[0].len() as f32 * maze.cell_size * 0.5
+                        + maze.cell_size * num_x,
+                    node.position.y * maze.cell_size
+                        - maze.grid.len() as f32 * maze.cell_size * 0.5
+                        + maze.cell_size * num_y,
+                    0.,
+                )),
+                Wall {
+                    direction: *direction,
+                },
             ));
         });
     }
@@ -272,7 +255,7 @@ fn spawn_colliders(
 
 fn remove_colliders(
     mut commands: Commands,
-    path_colliders: Query<(Entity, &Transform), With<PathCollider>>,
+    wall_colliders: Query<(Entity, &Transform), With<Wall>>,
     maze: Res<Maze>,
     node_query: Query<&MazeNode>,
 ) {
@@ -298,7 +281,7 @@ fn remove_colliders(
             parent_direction.y * maze.cell_size * 0.5,
         );
 
-        for (entity, transform) in path_colliders.iter() {
+        for (entity, transform) in wall_colliders.iter() {
             if transform
                 .translation
                 .distance(node_translation + Vec3::new(offset.x, offset.y, 0.))

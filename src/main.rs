@@ -40,7 +40,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             ShapePlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.),
-            RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),
             bevy::diagnostic::FrameTimeDiagnosticsPlugin,
             PerfUiPlugin,
         ))
