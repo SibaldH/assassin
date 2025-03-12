@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use camera::CameraPlugin;
 use iyes_perf_ui::prelude::*;
 
 use bevy_rapier2d::{
@@ -13,6 +14,7 @@ use maze_specs::{MazeColor, MazeShape};
 use player::PlayerPlugin;
 use walls::WallPlugin;
 
+mod camera;
 mod fog;
 mod gamestate;
 mod maze;
@@ -56,6 +58,7 @@ fn main() {
             TimerMode::Repeating,
         )))
         .add_plugins(GameStatePlugin)
+        .add_plugins(CameraPlugin)
         .add_plugins(MazePlugin {
             state: GameState::Running,
         })
@@ -70,7 +73,6 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
     commands.spawn((
         PerfUiRoot {
             display_labels: false,
