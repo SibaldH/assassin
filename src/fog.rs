@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::gamestate::GameState;
 use crate::maze::Maze;
 use crate::maze_specs::MazeColor;
 use crate::player::Player;
@@ -62,6 +63,7 @@ fn update_visibility(
 fn update_node_visibility(
     mut commands: Commands,
     visibility_map: Res<VisibilityMap>,
+    game_state: Res<State<GameState>>,
     maze: Res<Maze>,
     mut wall_query: Query<(&Transform, Entity, &mut Wall)>,
     color: Res<MazeColor>,
@@ -70,10 +72,13 @@ fn update_node_visibility(
     for (wall_transform, wall_entity, wall) in wall_query.iter_mut() {
         let tile_pos = Vec2::new(wall_transform.translation.x, wall_transform.translation.y);
 
+        let game_state = game_state.get();
+
         if visibility_map
             .visible_points
             .iter()
             .any(|&point| (point - tile_pos).length() < maze.cell_size * 0.5)
+            || game_state == &GameState::Paused
         {
             let shape = shapes::Rectangle {
                 extents: Vec2::new(
