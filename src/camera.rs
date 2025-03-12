@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{core_pipeline::bloom::Bloom, prelude::*};
 
 use crate::{gamestate::GameState, player::Player};
 
@@ -7,42 +7,81 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_cameras);
-        app.add_systems(Update, follow_player.run_if(in_state(GameState::Running)));
+        app.add_systems(Update, (follow_player).run_if(in_state(GameState::Running)));
         app.add_systems(Update, center_camera.run_if(in_state(GameState::Paused)));
+        app.add_systems(Update, zoom_camera);
     }
 }
 
 fn setup_cameras(mut commands: Commands) {
     // Spawn a 2D camera for the paused state
-    commands.spawn(Camera2d);
+    commands.spawn((
+        Camera2d,
+        Camera {
+            hdr: true,
+            ..default()
+        },
+        Bloom::NATURAL,
+        OrthographicProjection::default_2d(),
+    ));
 }
 
-const LERP_SPEED: f32 = 5.0;
+const CAMERA_DECAY_RATE: f32 = 5.0;
+const CAMERA_ZOOM_RATE: f32 = 5.0;
 
 fn follow_player(
+    mut camera: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
+    player: Query<&Transform, (With<Player>, Without<Camera2d>)>,
     time: Res<Time>,
-    player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
-    mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
 ) {
-    let player_transform = player_query.single();
-    let player_pos = player_transform.translation.truncate();
+    let Ok(mut camera) = camera.get_single_mut() else {
+        return;
+    };
 
-    let mut camera_transform = camera_query.single_mut();
-    let new_pos = camera_transform.translation.lerp(
-        player_pos.extend(0.0),
-        1.0 - f32::exp(-LERP_SPEED * time.delta_secs()),
-    );
+    let Ok(player) = player.get_single() else {
+        return;
+    };
 
-    camera_transform.translation = new_pos;
+    let Vec3 { x, y, .. } = player.translation;
+    let direction = Vec3::new(x, y, camera.translation.z);
+
+    // Applies a smooth effect to camera movement using stable interpolation
+    // between the camera position and the player position on the x and y axes.
+    camera
+        .translation
+        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
+}
+
+fn zoom_camera(
+    mut projection: Query<&mut OrthographicProjection, (With<Camera2d>, Without<Player>)>,
+    game_state: Res<State<GameState>>,
+    time: Res<Time>,
+) {
+    let zoom_target = match game_state.get() {
+        GameState::Paused => 2.,
+        GameState::Running => 1.,
+    };
+
+    let Ok(mut projection) = projection.get_single_mut() else {
+        return;
+    };
+
+    let current_zoom = projection.scale;
+    let zoom_amount = zoom_target - current_zoom;
+
+    projection
+        .scale
+        .smooth_nudge(&zoom_amount, CAMERA_ZOOM_RATE, time.delta_secs());
 }
 
 fn center_camera(time: Res<Time>, mut camera_query: Query<&mut Transform, With<Camera2d>>) {
-    let mut camera_transform = camera_query.single_mut();
+    let Ok(mut camera) = camera_query.get_single_mut() else {
+        return;
+    };
 
-    let new_pos = camera_transform.translation.lerp(
-        Vec3::new(0.0, 0.0, 0.0),
-        1.0 - f32::exp(-LERP_SPEED * time.delta_secs()),
-    );
+    let direction = Vec3::new(0., 0., camera.translation.z);
 
-    camera_transform.translation = new_pos;
+    camera
+        .translation
+        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
 }
