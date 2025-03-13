@@ -148,42 +148,6 @@ fn setup_walls(
                 - (maze.cell_size - maze.path_thickness) * 0.5,
         ),
     ));
-
-    for node in node_query.iter() {
-        if node.position.x == maze.grid[0].len() as f32 - 1. {
-            continue;
-        }
-        if node.position.y == maze.grid.len() as f32 - 1. {
-            continue;
-        }
-
-        commands.spawn((
-            ShapeBundle {
-                path: GeometryBuilder::build_as(&shapes::Rectangle {
-                    extents: Vec2::new(
-                        maze.cell_size - maze.path_thickness,
-                        maze.cell_size - maze.path_thickness,
-                    ),
-                    ..default()
-                }),
-                transform: Transform::from_translation(Vec3::new(
-                    node.position.x * maze.cell_size
-                        - maze.grid[0].len() as f32 * maze.cell_size * 0.5
-                        + maze.cell_size,
-                    node.position.y * maze.cell_size
-                        - maze.grid.len() as f32 * maze.cell_size * 0.5
-                        + maze.cell_size,
-                    0.,
-                )),
-                ..default()
-            },
-            Fill::color(color.wall_color),
-            Collider::cuboid(
-                (maze.cell_size - maze.path_thickness) * 0.5,
-                (maze.cell_size - maze.path_thickness) * 0.5,
-            ),
-        ));
-    }
 }
 
 fn spawn_colliders(
@@ -230,10 +194,10 @@ fn spawn_colliders(
             commands.spawn((
                 Collider::cuboid(
                     ((maze.cell_size - maze.path_thickness) * direction.x
-                        + maze.path_thickness * direction.y)
+                        + (2. * maze.cell_size - maze.path_thickness) * direction.y)
                         * 0.5,
                     ((maze.cell_size - maze.path_thickness) * direction.y
-                        + maze.path_thickness * direction.x)
+                        + (2. * maze.cell_size - maze.path_thickness) * direction.x)
                         * 0.5,
                 ),
                 Transform::from_translation(Vec3::new(

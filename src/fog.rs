@@ -83,9 +83,9 @@ fn update_node_visibility(
             let shape = shapes::Rectangle {
                 extents: Vec2::new(
                     (maze.cell_size - maze.path_thickness) * wall.direction.x
-                        + maze.path_thickness * wall.direction.y,
+                        + (2. * maze.cell_size - maze.path_thickness) * wall.direction.y,
                     (maze.cell_size - maze.path_thickness) * wall.direction.y
-                        + maze.path_thickness * wall.direction.x,
+                        + (2. * maze.cell_size - maze.path_thickness) * wall.direction.x,
                 ),
                 ..default()
             };
