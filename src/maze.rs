@@ -1,9 +1,9 @@
 use std::cmp::min;
 
-use bevy::prelude::*;
+use bevy::{math::NormedVectorSpace, prelude::*};
 use rand::random_range;
 
-use crate::{maze_specs::MazeShape, MazeUpdateTimer};
+use crate::{maze_specs::MazeShape, player::Player, MazeUpdateTimer};
 
 pub struct MazePlugin<S: States> {
     pub state: S,
@@ -101,13 +101,19 @@ fn update_maze(
     mut query: Query<&mut MazeNode>,
     time: Res<Time>,
     mut timer: ResMut<MazeUpdateTimer>,
+    player_query: Query<&Transform, With<Player>>,
 ) {
     if !timer.0.tick(time.delta()).just_finished() {
         return;
     }
     if let Ok(mut root_node) = query.get_mut(maze.root) {
-        let available_dirs =
-            get_available_dir(root_node.position, maze.grid[0].len(), maze.grid.len());
+        let player_pos = player_query.single().translation.truncate();
+        let available_dirs = get_available_dir(
+            root_node.position,
+            (maze.grid[0].len(), maze.grid.len()),
+            &maze,
+            player_pos,
+        );
 
         if !available_dirs.is_empty() {
             let random_index = random_range(0..available_dirs.len());
@@ -146,19 +152,37 @@ pub enum Direction {
     Right,
 }
 
-fn get_available_dir(position: Vec2, grid_width: usize, grid_height: usize) -> Vec<Direction> {
+fn get_available_dir(
+    position: Vec2,
+    maze_shape: (usize, usize),
+    maze: &Maze,
+    player_position: Vec2,
+) -> Vec<Direction> {
     let mut available_dirs = Vec::new();
 
-    if position.y > 0.0 {
+    let true_pos = Vec2::new(
+        position.x * maze.cell_size - maze.grid[0].len() as f32 * maze.cell_size * 0.5,
+        position.y * maze.cell_size - maze.grid.len() as f32 * maze.cell_size * 0.5,
+    );
+
+    if position.y > 0.0
+        && player_position.distance(true_pos + Vec2::new(0., maze.cell_size)) > maze.view_distance
+    {
         available_dirs.push(Direction::Up);
     }
-    if position.y < grid_height as f32 - 1.0 {
+    if position.y < maze_shape.1 as f32 - 1.0
+        && player_position.distance(true_pos + Vec2::new(0., -maze.cell_size)) > maze.view_distance
+    {
         available_dirs.push(Direction::Down);
     }
-    if position.x > 0.0 {
+    if position.x > 0.0
+        && player_position.distance(true_pos + Vec2::new(-maze.cell_size, 0.)) > maze.view_distance
+    {
         available_dirs.push(Direction::Left);
     }
-    if position.x < grid_width as f32 - 1.0 {
+    if position.x < maze_shape.0 as f32 - 1.0
+        && player_position.distance(true_pos + Vec2::new(maze.cell_size, 0.)) > maze.view_distance
+    {
         available_dirs.push(Direction::Right);
     }
 
