@@ -4,12 +4,14 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{hud::SprintState, maze::Maze, maze_specs::MazeColor};
 
-pub struct PlayerPlugin;
+pub struct PlayerPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for PlayerPlugin {
+impl<S: States> Plugin for PlayerPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_player);
-        app.add_systems(Update, update_player);
+        app.add_systems(Update, update_player.run_if(in_state(self.state.clone())));
     }
 }
 

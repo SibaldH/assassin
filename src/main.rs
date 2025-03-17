@@ -66,7 +66,9 @@ fn main() {
         .add_plugins(WallPlugin {
             state: GameState::Running,
         })
-        .add_plugins(PlayerPlugin)
+        .add_plugins(PlayerPlugin {
+            state: GameState::Running,
+        })
         .add_plugins(FogPlugin {
             state: GameState::Running,
         })
