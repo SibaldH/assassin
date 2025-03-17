@@ -61,8 +61,15 @@ fn update_player(
         movement.x += 1.;
     }
 
+    // Shift for sprint
+    let speed_factor = if keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight) {
+        1.5
+    } else {
+        1.
+    };
+
     if movement.length() > 0. {
-        movement = movement.normalize() * 2.;
+        movement = movement.normalize() * 2.0 * speed_factor;
     }
 
     controller.translation = Some(movement);
