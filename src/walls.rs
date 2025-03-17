@@ -14,7 +14,12 @@ pub struct WallPlugin<S: States> {
 impl<S: States> Plugin for WallPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_walls);
-        app.add_systems(Update, (spawn_colliders, remove_colliders).chain());
+        app.add_systems(
+            Update,
+            (spawn_colliders, remove_colliders)
+                .chain()
+                .run_if(in_state(self.state.clone())),
+        );
     }
 }
 
@@ -23,12 +28,7 @@ pub struct Wall {
     pub direction: Vec2,
 }
 
-fn setup_walls(
-    maze: Res<Maze>,
-    mut commands: Commands,
-    node_query: Query<&MazeNode>,
-    color: Res<MazeColor>,
-) {
+fn setup_walls(maze: Res<Maze>, mut commands: Commands, color: Res<MazeColor>) {
     // Background
     commands.spawn((
         ShapeBundle {
@@ -164,33 +164,20 @@ fn spawn_colliders(
     for node in node_query.iter() {
         let mut directions = Vec::new();
 
-        if node.position.x > 0. {
+        if node.index.x > 0. {
             directions.push(Vec2::new(-1., 0.));
         }
-        if node.position.x < maze.grid[0].len() as f32 - 1. {
+        if node.index.x < maze.grid[0].len() as f32 - 1. {
             directions.push(Vec2::new(1., 0.));
         }
-        if node.position.y > 0. {
+        if node.index.y > 0. {
             directions.push(Vec2::new(0., -1.));
         }
-        if node.position.y < maze.grid.len() as f32 - 1. {
+        if node.index.y < maze.grid.len() as f32 - 1. {
             directions.push(Vec2::new(0., 1.));
         }
 
         directions.iter().for_each(|direction| {
-            let num_x = match direction.x {
-                1. => 1.,
-                -1. => 0.,
-                0. => 0.5,
-                _ => 0.,
-            };
-
-            let num_y = match direction.y {
-                1. => 1.,
-                -1. => 0.,
-                0. => 0.5,
-                _ => 0.,
-            };
             commands.spawn((
                 Collider::cuboid(
                     ((maze.cell_size - maze.path_thickness) * direction.x
@@ -200,15 +187,14 @@ fn spawn_colliders(
                         + (2. * maze.cell_size - maze.path_thickness) * direction.x)
                         * 0.5,
                 ),
-                Transform::from_translation(Vec3::new(
-                    node.position.x * maze.cell_size
-                        - maze.grid[0].len() as f32 * maze.cell_size * 0.5
-                        + maze.cell_size * num_x,
-                    node.position.y * maze.cell_size
-                        - maze.grid.len() as f32 * maze.cell_size * 0.5
-                        + maze.cell_size * num_y,
-                    0.,
-                )),
+                Transform::from_translation(
+                    node.position.extend(0.)
+                        + Vec3::new(
+                            maze.cell_size * direction.x * 0.5,
+                            maze.cell_size * direction.y * 0.5,
+                            0.,
+                        ),
+                ),
                 Wall {
                     direction: *direction,
                 },
@@ -228,17 +214,9 @@ fn remove_colliders(
             continue;
         }
         let parent_node = node_query.get(node.parent.unwrap()).unwrap();
-        let parent_direction = parent_node.position - node.position;
+        let parent_direction = parent_node.index - node.index;
 
-        let node_translation = Vec3::new(
-            node.position.x * maze.cell_size
-                + maze.grid[0].len() as f32 * maze.cell_size * -0.5
-                + maze.cell_size * 0.5,
-            node.position.y * maze.cell_size
-                + maze.grid.len() as f32 * maze.cell_size * -0.5
-                + maze.cell_size * 0.5,
-            0.,
-        );
+        let node_translation = node.position.extend(0.);
 
         let offset = Vec2::new(
             parent_direction.x * maze.cell_size * 0.5,

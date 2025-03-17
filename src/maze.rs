@@ -19,6 +19,7 @@ impl<S: States> Plugin for MazePlugin<S> {
 #[derive(Component)]
 pub struct MazeNode {
     pub position: Vec2,
+    pub index: Vec2,
     pub parent: Option<Entity>,
 }
 
@@ -52,7 +53,15 @@ fn setup_maze(mut commands: Commands, shape: Res<MazeShape>, window: Query<&Wind
             let entity = commands
                 .spawn((
                     MazeNode {
-                        position: Vec2::new(x as f32, y as f32),
+                        position: Vec2::new(
+                            x as f32 * maze.cell_size
+                                - maze.grid[0].len() as f32 * 0.5 * maze.cell_size
+                                + (maze.cell_size * 0.5),
+                            y as f32 * maze.cell_size
+                                - maze.grid.len() as f32 * 0.5 * maze.cell_size
+                                + (maze.cell_size * 0.5),
+                        ),
+                        index: Vec2::new(x as f32, y as f32),
                         parent: None,
                     },
                     Transform::from_translation(Vec3::new(
@@ -120,16 +129,16 @@ fn update_maze(
 
             let new_root = match available_dirs[random_index] {
                 Direction::Up => {
-                    maze.grid[root_node.position.y as usize - 1][root_node.position.x as usize]
+                    maze.grid[root_node.index.y as usize - 1][root_node.index.x as usize]
                 }
                 Direction::Down => {
-                    maze.grid[root_node.position.y as usize + 1][root_node.position.x as usize]
+                    maze.grid[root_node.index.y as usize + 1][root_node.index.x as usize]
                 }
                 Direction::Left => {
-                    maze.grid[root_node.position.y as usize][root_node.position.x as usize - 1]
+                    maze.grid[root_node.index.y as usize][root_node.index.x as usize - 1]
                 }
                 Direction::Right => {
-                    maze.grid[root_node.position.y as usize][root_node.position.x as usize + 1]
+                    maze.grid[root_node.index.y as usize][root_node.index.x as usize + 1]
                 }
             };
             root_node.parent = Some(new_root);
@@ -160,28 +169,23 @@ fn get_available_dir(
 ) -> Vec<Direction> {
     let mut available_dirs = Vec::new();
 
-    let true_pos = Vec2::new(
-        position.x * maze.cell_size - maze.grid[0].len() as f32 * maze.cell_size * 0.5,
-        position.y * maze.cell_size - maze.grid.len() as f32 * maze.cell_size * 0.5,
-    );
-
     if position.y > 0.0
-        && player_position.distance(true_pos + Vec2::new(0., maze.cell_size)) > maze.view_distance
+        && player_position.distance(position + Vec2::new(0., maze.cell_size)) > maze.view_distance
     {
         available_dirs.push(Direction::Up);
     }
     if position.y < maze_shape.1 as f32 - 1.0
-        && player_position.distance(true_pos + Vec2::new(0., -maze.cell_size)) > maze.view_distance
+        && player_position.distance(position + Vec2::new(0., -maze.cell_size)) > maze.view_distance
     {
         available_dirs.push(Direction::Down);
     }
     if position.x > 0.0
-        && player_position.distance(true_pos + Vec2::new(-maze.cell_size, 0.)) > maze.view_distance
+        && player_position.distance(position + Vec2::new(-maze.cell_size, 0.)) > maze.view_distance
     {
         available_dirs.push(Direction::Left);
     }
     if position.x < maze_shape.0 as f32 - 1.0
-        && player_position.distance(true_pos + Vec2::new(maze.cell_size, 0.)) > maze.view_distance
+        && player_position.distance(position + Vec2::new(maze.cell_size, 0.)) > maze.view_distance
     {
         available_dirs.push(Direction::Right);
     }
