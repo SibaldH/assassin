@@ -75,18 +75,16 @@ fn update_player(
     let mut sprint_factor = 1.0;
 
     if is_sprinting {
-        // Apply sprint factor only when actually sprinting (Shift + movement)
-        sprint_factor = 1.5;
-
         // Reset recovery timer while sprinting
         sprint_state.recovery_timer.reset();
 
         // Drain sprint bar only if sprinting and percentage > 0
-        if sprint_state.percentage > 0.0
-            && sprint_state.sprint_timer.tick(time.delta()).just_finished()
-        {
-            sprint_state.percentage -= sprint_state.change_value;
-            sprint_state.percentage = sprint_state.percentage.max(0.0); // Clamp to 0%
+        if sprint_state.percentage > 0.0 {
+            sprint_factor = 1.5;
+            if sprint_state.sprint_timer.tick(time.delta()).just_finished() {
+                sprint_state.percentage -= sprint_state.change_value;
+                sprint_state.percentage = sprint_state.percentage.max(0.0); // Clamp to 0%
+            }
         }
     } else {
         // Tick recovery timer when not sprinting
