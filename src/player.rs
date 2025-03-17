@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{maze::Maze, maze_specs::MazeColor};
+use crate::{hud::SprintState, maze::Maze, maze_specs::MazeColor};
 
 pub struct PlayerPlugin;
 
@@ -44,10 +44,12 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
 fn update_player(
     keys: Res<ButtonInput<KeyCode>>,
     mut player_controllers: Query<&mut KinematicCharacterController, With<Player>>,
+    time: Res<Time>,
+    mut sprint_state: ResMut<SprintState>,
 ) {
     let mut controller = player_controllers.single_mut();
-    let mut movement = Vec2::new(0., 0.);
 
+    let mut movement = Vec2::new(0., 0.);
     if keys.pressed(KeyCode::KeyW) {
         movement.y += 1.;
     }
@@ -61,16 +63,47 @@ fn update_player(
         movement.x += 1.;
     }
 
-    // Shift for sprint
-    let speed_factor = if keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight) {
-        1.5
-    } else {
-        1.
-    };
-
-    if movement.length() > 0. {
-        movement = movement.normalize() * 2.0 * speed_factor;
+    // Normalize movement vector if needed
+    let is_moving = movement.length() > 0.0;
+    if is_moving {
+        movement = movement.normalize() * 2.0;
     }
 
-    controller.translation = Some(movement);
+    // Shift for sprint
+    let is_sprinting =
+        (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)) && is_moving;
+    let mut sprint_factor = 1.0;
+
+    if is_sprinting {
+        // Apply sprint factor only when actually sprinting (Shift + movement)
+        sprint_factor = 1.5;
+
+        // Reset recovery timer while sprinting
+        sprint_state.recovery_timer.reset();
+
+        // Drain sprint bar only if sprinting and percentage > 0
+        if sprint_state.percentage > 0.0
+            && sprint_state.sprint_timer.tick(time.delta()).just_finished()
+        {
+            sprint_state.percentage -= sprint_state.change_value;
+            sprint_state.percentage = sprint_state.percentage.max(0.0); // Clamp to 0%
+        }
+    } else {
+        // Tick recovery timer when not sprinting
+        sprint_state.recovery_timer.tick(time.delta());
+
+        // Recover sprint bar if timer is finished and percentage < 100
+        if sprint_state.recovery_timer.finished() && sprint_state.percentage < 100.0 {
+            sprint_state.percentage += sprint_state.change_value;
+            sprint_state.percentage = sprint_state.percentage.min(100.0); // Clamp to 100%
+
+            // Reset recovery timer if fully recovered
+            if sprint_state.percentage >= 100.0 {
+                sprint_state.recovery_timer.reset();
+            }
+        }
+    }
+
+    // Apply sprint factor to movement
+    controller.translation = Some(movement * sprint_factor);
 }
