@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use bevy::{math::NormedVectorSpace, prelude::*};
+use bevy::prelude::*;
 use rand::random_range;
 
 use crate::{maze_specs::MazeShape, player::Player, MazeUpdateTimer};

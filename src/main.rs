@@ -17,6 +17,7 @@ use walls::WallPlugin;
 mod camera;
 mod fog;
 mod gamestate;
+mod hud;
 mod maze;
 mod maze_specs;
 mod player;
@@ -69,6 +70,7 @@ fn main() {
         .add_plugins(FogPlugin {
             state: GameState::Running,
         })
+        .add_plugins(hud::HudPlugin)
         .run();
 }
 
