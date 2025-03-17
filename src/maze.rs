@@ -118,6 +118,7 @@ fn update_maze(
     if let Ok(mut root_node) = query.get_mut(maze.root) {
         let player_pos = player_query.single().translation.truncate();
         let available_dirs = get_available_dir(
+            root_node.index,
             root_node.position,
             (maze.grid[0].len(), maze.grid.len()),
             &maze,
@@ -162,30 +163,35 @@ pub enum Direction {
 }
 
 fn get_available_dir(
-    position: Vec2,
+    root_index: Vec2,
+    root_position: Vec2,
     maze_shape: (usize, usize),
     maze: &Maze,
     player_position: Vec2,
 ) -> Vec<Direction> {
     let mut available_dirs = Vec::new();
 
-    if position.y > 0.0
-        && player_position.distance(position + Vec2::new(0., maze.cell_size)) > maze.view_distance
+    if root_index.y > 0.0
+        && player_position.distance(root_position + Vec2::new(0., maze.cell_size))
+            > maze.view_distance
     {
         available_dirs.push(Direction::Up);
     }
-    if position.y < maze_shape.1 as f32 - 1.0
-        && player_position.distance(position + Vec2::new(0., -maze.cell_size)) > maze.view_distance
+    if root_index.y < maze_shape.1 as f32 - 1.0
+        && player_position.distance(root_position + Vec2::new(0., -maze.cell_size))
+            > maze.view_distance
     {
         available_dirs.push(Direction::Down);
     }
-    if position.x > 0.0
-        && player_position.distance(position + Vec2::new(-maze.cell_size, 0.)) > maze.view_distance
+    if root_index.x > 0.0
+        && player_position.distance(root_position + Vec2::new(-maze.cell_size, 0.))
+            > maze.view_distance
     {
         available_dirs.push(Direction::Left);
     }
-    if position.x < maze_shape.0 as f32 - 1.0
-        && player_position.distance(position + Vec2::new(maze.cell_size, 0.)) > maze.view_distance
+    if root_index.x < maze_shape.0 as f32 - 1.0
+        && player_position.distance(root_position + Vec2::new(maze.cell_size, 0.))
+            > maze.view_distance
     {
         available_dirs.push(Direction::Right);
     }
