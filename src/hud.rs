@@ -43,14 +43,14 @@ fn setup_hud(
     let font = asset_server.load("fonts/MatrixtypeDisplay-9MyE5.ttf");
     commands
         .spawn(Node {
-            width: Val::Percent(90.0),
+            width: Val::Percent(95.0),
             height: Val::Percent(20.0),
             align_self: AlignSelf::FlexStart,
             justify_self: JustifySelf::Center,
             align_items: AlignItems::FlexStart,
             justify_content: JustifyContent::SpaceBetween,
             margin: UiRect {
-                top: Val::Vh(10.),
+                top: Val::Vh(2.),
                 ..default()
             },
             ..default()
@@ -59,8 +59,8 @@ fn setup_hud(
             parent
                 .spawn((
                     Node {
-                        width: Val::Px(150.),
-                        height: Val::Px(50.),
+                        width: Val::Px(100.),
+                        height: Val::Px(25.),
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Center,
                         ..default()
@@ -72,7 +72,7 @@ fn setup_hud(
                         Text::new("Score: "),
                         TextFont {
                             font: font.clone(),
-                            font_size: 20.0,
+                            font_size: 15.0,
                             ..default()
                         },
                         TextColor(Color::srgba(1.0, 1.0, 1.0, 1.0)),
@@ -82,7 +82,7 @@ fn setup_hud(
                         Text::new("0"),
                         TextFont {
                             font: font.clone(),
-                            font_size: 20.0,
+                            font_size: 15.0,
                             ..default()
                         },
                         TextColor(Color::srgba(1.0, 1.0, 1.0, 1.0)),
@@ -93,10 +93,10 @@ fn setup_hud(
             parent
                 .spawn((
                     Node {
-                        width: Val::Px(30.),
-                        height: Val::Px(200.),
-                        align_items: AlignItems::FlexEnd,
-                        justify_content: JustifyContent::FlexStart,
+                        width: Val::Px(200.),
+                        height: Val::Px(30.),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::FlexEnd,
                         border: UiRect::all(Val::Px(5.)),
                         ..default()
                     },
@@ -106,8 +106,8 @@ fn setup_hud(
                 .with_children(|parent| {
                     parent.spawn((
                         Node {
-                            width: Val::Percent(100.),
-                            height: Val::Percent(sprint_state.percentage),
+                            width: Val::Percent(sprint_state.percentage),
+                            height: Val::Percent(100.),
                             ..default()
                         },
                         BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
@@ -130,7 +130,7 @@ fn update_hud(
     }
 
     for mut sprint_bar in &mut sprint_query {
-        sprint_bar.height = Val::Percent(sprint_state.percentage);
+        sprint_bar.width = Val::Percent(sprint_state.percentage);
     }
 
     timer.0.tick(time.delta());
