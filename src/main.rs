@@ -7,7 +7,6 @@ use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
-use fog::FogPlugin;
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
@@ -15,9 +14,9 @@ use player::PlayerPlugin;
 use walls::WallPlugin;
 
 mod camera;
-mod fog;
 mod gamestate;
 mod hud;
+mod light;
 mod maze;
 mod maze_specs;
 mod player;
@@ -69,9 +68,7 @@ fn main() {
         .add_plugins(PlayerPlugin {
             state: GameState::Running,
         })
-        .add_plugins(FogPlugin {
-            state: GameState::Running,
-        })
+        .add_plugins()
         .add_plugins(hud::HudPlugin)
         .run();
 }
