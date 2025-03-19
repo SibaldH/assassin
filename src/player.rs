@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_light_2d::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -39,6 +40,13 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
         Sleeping::disabled(),
         Ccd::enabled(),
         Collider::ball(maze.cell_size * 0.2),
+        PointLight2d {
+            intensity: 20.0,
+            radius: maze.cell_size * 4.,
+            falloff: 10.,
+            cast_shadows: true,
+            ..default()
+        },
         Player,
     ));
 }

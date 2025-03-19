@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_light_2d::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -24,9 +25,7 @@ impl<S: States> Plugin for WallPlugin<S> {
 }
 
 #[derive(Component)]
-pub struct Wall {
-    pub direction: Vec2,
-}
+pub struct Wall;
 
 fn setup_walls(maze: Res<Maze>, mut commands: Commands, color: Res<MazeColor>) {
     // Background
@@ -178,15 +177,17 @@ fn spawn_colliders(
         }
 
         directions.iter().for_each(|direction| {
+            let half_shape = Vec2::new(
+                ((maze.cell_size - maze.path_thickness) * direction.x
+                    + (2. * maze.cell_size - maze.path_thickness) * direction.y)
+                    * 0.5,
+                ((maze.cell_size - maze.path_thickness) * direction.y
+                    + (2. * maze.cell_size - maze.path_thickness) * direction.x)
+                    * 0.5,
+            );
+
             commands.spawn((
-                Collider::cuboid(
-                    ((maze.cell_size - maze.path_thickness) * direction.x
-                        + (2. * maze.cell_size - maze.path_thickness) * direction.y)
-                        * 0.5,
-                    ((maze.cell_size - maze.path_thickness) * direction.y
-                        + (2. * maze.cell_size - maze.path_thickness) * direction.x)
-                        * 0.5,
-                ),
+                Collider::cuboid(half_shape.x, half_shape.y),
                 Transform::from_translation(
                     node.position.extend(0.)
                         + Vec3::new(
@@ -195,9 +196,12 @@ fn spawn_colliders(
                             0.,
                         ),
                 ),
-                Wall {
-                    direction: *direction,
+                LightOccluder2d {
+                    shape: LightOccluder2dShape::Rectangle {
+                        half_size: half_shape,
+                    },
                 },
+                Wall,
             ));
         });
     }
