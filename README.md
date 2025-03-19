@@ -4,12 +4,13 @@
 - [x] Fix slow gameplay
 - [ ] Cleanup code 
 - [x] Split MazePlugin
-- [ ] Implement shader
+- [x] Implement shadow
 - [ ] Add player sprite
 - [X] Add fps counter
 - [ ] Push player out wall
 - [ ] Add start screen
-- [ ] Change camera based on state
+- [ ] Add gravity
+- [x] Change camera based on state
 
 ## IDEAS
 - [ ] see the entire map (ability)
@@ -17,4 +18,6 @@
 - [ ] Call maze head (ability)
 - [ ] teleport station (ability)
 - [ ] glitch through walls (ability)
-- [ ] (objective)
+- [ ] wall jump (ability)
+- [ ] create rooms (ability)
+- [ ] light up the whole maze (objective)
