@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_light_2d::plugin::Light2dPlugin;
 use bevy_prototype_lyon::prelude::*;
 use camera::CameraPlugin;
 use iyes_perf_ui::prelude::*;
@@ -42,6 +43,7 @@ fn main() {
             // RapierDebugRenderPlugin::default(),
             bevy::diagnostic::FrameTimeDiagnosticsPlugin,
             PerfUiPlugin,
+            Light2dPlugin,
         ))
         .add_systems(Startup, setup)
         .insert_resource(MazeColor {

@@ -4,8 +4,10 @@ use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
+    gamestate::GameState,
     maze::{Maze, MazeNode},
     maze_specs::MazeColor,
+    player::{Player, RangeNodes},
 };
 
 pub struct WallPlugin<S: States> {
@@ -33,8 +35,10 @@ fn setup_walls(maze: Res<Maze>, mut commands: Commands, color: Res<MazeColor>) {
         ShapeBundle {
             path: GeometryBuilder::build_as(&shapes::Rectangle {
                 extents: Vec2::new(
-                    maze.grid[0].len() as f32 * maze.cell_size,
-                    maze.grid.len() as f32 * maze.cell_size,
+                    maze.grid[0].len() as f32 * maze.cell_size
+                        + (maze.cell_size - maze.path_thickness),
+                    maze.grid.len() as f32 * maze.cell_size
+                        + (maze.cell_size - maze.path_thickness),
                 ),
                 ..default()
             }),
@@ -44,123 +48,65 @@ fn setup_walls(maze: Res<Maze>, mut commands: Commands, color: Res<MazeColor>) {
         Fill::color(color.path_color),
     ));
 
-    // Upper border
-    commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(
-                    maze.grid[0].len() as f32 * maze.cell_size
-                        + (maze.cell_size - maze.path_thickness),
-                    maze.cell_size - maze.path_thickness,
-                ),
-                ..default()
-            }),
-            transform: Transform::from_translation(Vec3::new(
-                0.,
-                maze.grid.len() as f32 * maze.cell_size * 0.5,
-                0.,
-            )),
+    // Borders
+    let directions = [
+        Vec2::new(1., 0.),
+        Vec2::new(0., 1.),
+        Vec2::new(-1., 0.),
+        Vec2::new(0., -1.),
+    ];
+    for direction in directions.iter() {
+        let shape = shapes::Rectangle {
+            extents: Vec2::new(
+                maze.grid[0].len() as f32 * maze.cell_size * direction.x.abs()
+                    + (maze.cell_size - maze.path_thickness),
+                maze.grid.len() as f32 * maze.cell_size * direction.y.abs()
+                    + (maze.cell_size - maze.path_thickness),
+            ),
             ..default()
-        },
-        Fill::color(color.wall_color),
-        Collider::cuboid(
-            maze.grid[0].len() as f32 * maze.cell_size * 0.5
-                + (maze.cell_size - maze.path_thickness) * 0.5,
-            (maze.cell_size - maze.path_thickness) * 0.5,
-        ),
-    ));
+        };
 
-    // Lower border
-    commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(
-                    maze.grid[0].len() as f32 * maze.cell_size
-                        + (maze.cell_size - maze.path_thickness),
-                    maze.cell_size - maze.path_thickness,
-                ),
-                ..default()
-            }),
-            transform: Transform::from_translation(Vec3::new(
-                0.,
-                maze.grid.len() as f32 * maze.cell_size * -0.5,
+        commands.spawn((
+            // ShapeBundle {
+            //     path: GeometryBuilder::build_as(&shape),
+            //     transform:             //     ..default()
+            // },
+            // Fill::color(color.wall_color),
+            Transform::from_translation(Vec3::new(
+                maze.grid[0].len() as f32 * maze.cell_size * direction.y * 0.5,
+                maze.grid.len() as f32 * maze.cell_size * direction.x * 0.5,
                 0.,
             )),
-            ..default()
-        },
-        Fill::color(color.wall_color),
-        Collider::cuboid(
-            maze.grid[0].len() as f32 * maze.cell_size * 0.5
-                + (maze.cell_size - maze.path_thickness) * 0.5,
-            (maze.cell_size - maze.path_thickness) * 0.5,
-        ),
-    ));
-
-    // Right border
-    commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(
-                    maze.cell_size - maze.path_thickness,
-                    maze.grid.len() as f32 * maze.cell_size
-                        - (maze.cell_size - maze.path_thickness),
-                ),
-                ..default()
-            }),
-            transform: Transform::from_translation(Vec3::new(
-                maze.grid[0].len() as f32 * maze.cell_size * 0.5,
-                0.,
-                0.,
-            )),
-            ..default()
-        },
-        Fill::color(color.wall_color),
-        Collider::cuboid(
-            (maze.cell_size - maze.path_thickness) * 0.5,
-            maze.grid.len() as f32 * maze.cell_size * 0.5
-                - (maze.cell_size - maze.path_thickness) * 0.5,
-        ),
-    ));
-
-    // Left border
-    commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(
-                    maze.cell_size - maze.path_thickness,
-                    maze.grid.len() as f32 * maze.cell_size
-                        - (maze.cell_size - maze.path_thickness),
-                ),
-                ..default()
-            }),
-            transform: Transform::from_translation(Vec3::new(
-                maze.grid[0].len() as f32 * maze.cell_size * -0.5,
-                0.,
-                0.,
-            )),
-            ..default()
-        },
-        Fill::color(color.wall_color),
-        Collider::cuboid(
-            (maze.cell_size - maze.path_thickness) * 0.5,
-            maze.grid.len() as f32 * maze.cell_size * 0.5
-                - (maze.cell_size - maze.path_thickness) * 0.5,
-        ),
-    ));
+            Collider::cuboid(shape.extents.x * 0.5, shape.extents.y * 0.5),
+            LightOccluder2d {
+                shape: LightOccluder2dShape::Rectangle {
+                    half_size: Vec2::new(shape.extents.x * 0.5, shape.extents.y * 0.5),
+                },
+            },
+        ));
+    }
 }
 
 fn spawn_colliders(
     wall_colliders: Query<Entity, With<Wall>>,
     maze: Res<Maze>,
     mut commands: Commands,
-    node_query: Query<&MazeNode>,
+    node_query: Query<(&MazeNode, Entity)>,
+    range_nodes: Res<RangeNodes>,
+    color: Res<MazeColor>,
+    game_state: Res<State<GameState>>,
 ) {
     for entity in wall_colliders.iter() {
         commands.entity(entity).despawn();
     }
 
     // Spawn colliders for all the walls
-    for node in node_query.iter() {
+    for (node, node_entity) in node_query.iter() {
+        //Check if the node is inside the range_nodes
+        if !range_nodes.0.contains(&node_entity) && game_state.get() != &GameState::Paused {
+            continue;
+        }
+
         let mut directions = Vec::new();
 
         if node.index.x > 0. {
@@ -177,17 +123,15 @@ fn spawn_colliders(
         }
 
         directions.iter().for_each(|direction| {
-            let half_shape = Vec2::new(
-                ((maze.cell_size - maze.path_thickness) * direction.x
-                    + (2. * maze.cell_size - maze.path_thickness) * direction.y)
-                    * 0.5,
-                ((maze.cell_size - maze.path_thickness) * direction.y
-                    + (2. * maze.cell_size - maze.path_thickness) * direction.x)
-                    * 0.5,
+            let shape = Vec2::new(
+                (maze.cell_size - maze.path_thickness) * direction.x
+                    + (2. * maze.cell_size - maze.path_thickness) * direction.y,
+                (maze.cell_size - maze.path_thickness) * direction.y
+                    + (2. * maze.cell_size - maze.path_thickness) * direction.x,
             );
 
             commands.spawn((
-                Collider::cuboid(half_shape.x, half_shape.y),
+                Collider::cuboid(shape.x * 0.5, shape.y * 0.5),
                 Transform::from_translation(
                     node.position.extend(0.)
                         + Vec3::new(
@@ -198,11 +142,32 @@ fn spawn_colliders(
                 ),
                 LightOccluder2d {
                     shape: LightOccluder2dShape::Rectangle {
-                        half_size: half_shape,
+                        half_size: shape * 0.5,
                     },
                 },
                 Wall,
             ));
+
+            if game_state.get() == &GameState::Paused {
+                commands.spawn((
+                    ShapeBundle {
+                        path: GeometryBuilder::build_as(&shapes::Rectangle {
+                            extents: shape,
+                            ..default()
+                        }),
+                        transform: Transform::from_translation(
+                            node.position.extend(0.)
+                                + Vec3::new(
+                                    maze.cell_size * direction.x * 0.5,
+                                    maze.cell_size * direction.y * 0.5,
+                                    0.,
+                                ),
+                        ),
+                        ..default()
+                    },
+                    Fill::color(color.wall_color),
+                ));
+            }
         });
     }
 }

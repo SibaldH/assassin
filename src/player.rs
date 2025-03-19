@@ -3,7 +3,11 @@ use bevy_light_2d::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{hud::SprintState, maze::Maze, maze_specs::MazeColor};
+use crate::{
+    hud::SprintState,
+    maze::{Maze, MazeNode},
+    maze_specs::MazeColor,
+};
 
 pub struct PlayerPlugin<S: States> {
     pub state: S,
@@ -11,13 +15,22 @@ pub struct PlayerPlugin<S: States> {
 
 impl<S: States> Plugin for PlayerPlugin<S> {
     fn build(&self, app: &mut App) {
+        app.insert_resource(RangeNodes(Vec::new()));
         app.add_systems(Startup, spawn_player);
-        app.add_systems(Update, update_player.run_if(in_state(self.state.clone())));
+        app.add_systems(
+            Update,
+            (update_player, update_range_nodes)
+                .chain()
+                .run_if(in_state(self.state.clone())),
+        );
     }
 }
 
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Resource)]
+pub struct RangeNodes(pub Vec<Entity>);
 
 fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
     commands.spawn((
@@ -42,13 +55,29 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
         Collider::ball(maze.cell_size * 0.2),
         PointLight2d {
             intensity: 20.0,
-            radius: maze.cell_size * 4.,
+            radius: maze.view_distance,
             falloff: 10.,
             cast_shadows: true,
-            ..default()
+            color: Color::WHITE,
         },
         Player,
     ));
+}
+
+fn update_range_nodes(
+    player_pos: Query<&Transform, With<Player>>,
+    mut range_nodes: ResMut<RangeNodes>,
+    nodes: Query<(Entity, &Transform), With<MazeNode>>,
+    maze: Res<Maze>,
+) {
+    let player_pos = player_pos.single().translation.truncate();
+    let mut new_nodes = Vec::new();
+    for (node, transform) in nodes.iter() {
+        if transform.translation.distance(player_pos.extend(0.)) < 4.0 * maze.cell_size {
+            new_nodes.push(node);
+        }
+    }
+    range_nodes.0 = new_nodes;
 }
 
 fn update_player(
