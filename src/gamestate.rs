@@ -21,7 +21,7 @@ fn toggle_pause(
     current_state: Res<State<GameState>>,
     keys: Res<ButtonInput<KeyCode>>,
 ) {
-    if keys.just_pressed(KeyCode::Space) {
+    if keys.just_pressed(KeyCode::KeyP) {
         match current_state.get() {
             GameState::Paused => next_state.set(GameState::Running),
             GameState::Running => next_state.set(GameState::Paused),
