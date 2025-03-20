@@ -1,18 +1,12 @@
 use bevy::prelude::*;
 
-use crate::gamestate::GameState;
+use crate::{gamestate::GameState, player::SprintState};
 
 pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScoreTimer(Timer::from_seconds(1., TimerMode::Repeating)));
-        app.insert_resource(SprintState {
-            sprint_timer: Timer::from_seconds(0.0025, TimerMode::Repeating),
-            recovery_timer: Timer::from_seconds(3.0, TimerMode::Once),
-            percentage: 100.0,
-            change_value: 0.1,
-        });
         app.add_systems(Startup, setup_hud);
         app.add_systems(Update, update_hud);
     }
@@ -26,14 +20,6 @@ struct ScoreTimer(Timer);
 
 #[derive(Component)]
 struct SprintValue;
-
-#[derive(Resource)]
-pub struct SprintState {
-    pub sprint_timer: Timer,
-    pub recovery_timer: Timer,
-    pub percentage: f32,
-    pub change_value: f32,
-}
 
 fn setup_hud(
     mut commands: Commands,

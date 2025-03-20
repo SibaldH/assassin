@@ -2,7 +2,12 @@ use bevy::prelude::*;
 use bevy_light_2d::plugin::Light2dPlugin;
 use bevy_prototype_lyon::prelude::*;
 use camera::CameraPlugin;
-use iyes_perf_ui::prelude::*;
+use iyes_perf_ui::{
+    entries::{
+        PerfUiFixedTimeEntries, PerfUiFramerateEntries, PerfUiSystemEntries, PerfUiWindowEntries,
+    },
+    prelude::*,
+};
 
 use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
@@ -75,14 +80,15 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn((
-        PerfUiRoot {
-            display_labels: false,
-            layout_horizontal: true,
-            values_col_width: 32.0,
-            ..default()
-        },
-        PerfUiEntryFPSWorst::default(),
-        PerfUiEntryFPS::default(),
+        // Contains everything related to FPS and frame time
+        PerfUiFramerateEntries::default(),
+        // Contains everything related to the window and cursor
+        PerfUiWindowEntries::default(),
+        // Contains everything related to system diagnostics (CPU, RAM)
+        PerfUiSystemEntries::default(),
+        // Contains everything related to fixed timestep
+        PerfUiFixedTimeEntries::default(),
+        // ...
     ));
 }
 
