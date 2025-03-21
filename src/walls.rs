@@ -67,11 +67,6 @@ fn setup_walls(maze: Res<Maze>, mut commands: Commands, color: Res<MazeColor>) {
         };
 
         commands.spawn((
-            // ShapeBundle {
-            //     path: GeometryBuilder::build_as(&shape),
-            //     transform:             //     ..default()
-            // },
-            // Fill::color(color.wall_color),
             Transform::from_translation(Vec3::new(
                 maze.grid[0].len() as f32 * maze.cell_size * direction.y * 0.5,
                 maze.grid.len() as f32 * maze.cell_size * direction.x * 0.5,
@@ -93,7 +88,6 @@ fn spawn_colliders(
     mut commands: Commands,
     node_query: Query<(&MazeNode, Entity)>,
     range_nodes: Res<RangeNodes>,
-    color: Res<MazeColor>,
     game_state: Res<State<GameState>>,
 ) {
     for entity in wall_colliders.iter() {
@@ -147,27 +141,6 @@ fn spawn_colliders(
                 },
                 Wall,
             ));
-
-            if game_state.get() == &GameState::Paused {
-                commands.spawn((
-                    ShapeBundle {
-                        path: GeometryBuilder::build_as(&shapes::Rectangle {
-                            extents: shape,
-                            ..default()
-                        }),
-                        transform: Transform::from_translation(
-                            node.position.extend(0.)
-                                + Vec3::new(
-                                    maze.cell_size * direction.x * 0.5,
-                                    maze.cell_size * direction.y * 0.5,
-                                    0.,
-                                ),
-                        ),
-                        ..default()
-                    },
-                    Fill::color(color.wall_color),
-                ));
-            }
         });
     }
 }
