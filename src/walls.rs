@@ -7,7 +7,7 @@ use crate::{
     gamestate::GameState,
     maze::{Maze, MazeNode},
     maze_specs::MazeColor,
-    player::{Player, RangeNodes},
+    player::RangeNodes,
 };
 
 pub struct WallPlugin<S: States> {

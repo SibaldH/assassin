@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{gamestate::GameState, player::SprintState};
+use crate::{gamestate::GameState, player::ManaState};
 
 pub struct HudPlugin;
 
@@ -19,13 +19,9 @@ struct ScoreValue(f32);
 struct ScoreTimer(Timer);
 
 #[derive(Component)]
-struct SprintValue;
+struct ManaValue;
 
-fn setup_hud(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    sprint_state: Res<SprintState>,
-) {
+fn setup_hud(mut commands: Commands, asset_server: Res<AssetServer>, mana_state: Res<ManaState>) {
     let font = asset_server.load("fonts/MatrixtypeDisplay-9MyE5.ttf");
     commands
         .spawn(Node {
@@ -92,12 +88,12 @@ fn setup_hud(
                 .with_children(|parent| {
                     parent.spawn((
                         Node {
-                            width: Val::Percent(sprint_state.percentage),
+                            width: Val::Percent(mana_state.percentage),
                             height: Val::Percent(100.),
                             ..default()
                         },
                         BackgroundColor(Color::srgb(1.0, 0.0, 0.0)),
-                        SprintValue,
+                        ManaValue,
                     ));
                 });
         });
@@ -108,15 +104,15 @@ fn update_hud(
     mut timer: ResMut<ScoreTimer>,
     game_state: Res<State<GameState>>,
     mut time_query: Query<(&mut Text, &mut ScoreValue)>,
-    sprint_state: Res<SprintState>,
-    mut sprint_query: Query<&mut Node, With<SprintValue>>,
+    mana_state: Res<ManaState>,
+    mut mana_query: Query<&mut Node, With<ManaValue>>,
 ) {
     if game_state.get() != &GameState::Running {
         return;
     }
 
-    for mut sprint_bar in &mut sprint_query {
-        sprint_bar.width = Val::Percent(sprint_state.percentage);
+    for mut mana_bar in &mut mana_query {
+        mana_bar.width = Val::Percent(mana_state.percentage);
     }
 
     timer.0.tick(time.delta());
