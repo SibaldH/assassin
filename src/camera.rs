@@ -7,14 +7,14 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_cameras);
-        app.add_systems(Update, (follow_player).run_if(in_state(GameState::Running)));
-        app.add_systems(Update, center_camera.run_if(in_state(GameState::Paused)));
+        app.add_systems(Update, (follow_player).run_if(in_state(GameState::InGame)));
+        app.add_systems(Update, center_camera.run_if(in_state(GameState::Scanning)));
         app.add_systems(Update, zoom_camera);
     }
 }
 
 fn setup_cameras(mut commands: Commands) {
-    // Spawn a 2D camera for the paused state
+    // Spawn a 2D camera for the Scanning state
     commands.spawn((
         Camera2d,
         Camera {
@@ -58,8 +58,8 @@ fn zoom_camera(
     time: Res<Time>,
 ) {
     let zoom_target = match game_state.get() {
-        GameState::Paused => 2.,
-        GameState::Running => 1.,
+        GameState::InGame => 1.,
+        _ => 2.,
     };
 
     let Ok(mut projection) = projection.get_single_mut() else {

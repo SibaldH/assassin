@@ -54,8 +54,6 @@ fn main() {
         .insert_resource(MazeColor {
             path_color: Color::srgb(0.2, 0.2, 0.2),
             wall_color: Color::srgb(0.8, 0.8, 0.8),
-            root_color: Color::srgb(1.0, 0.0, 0.0),
-            node_color: Color::srgb(0.0, 1.0, 0.0),
             player_color: Color::srgb(0.0, 0.0, 1.0),
         })
         .insert_resource(MazeShape(Vec2::new(15., 15.)))
@@ -66,15 +64,17 @@ fn main() {
         .add_plugins(GameStatePlugin)
         .add_plugins(CameraPlugin)
         .add_plugins(MazePlugin {
-            state: GameState::Running,
+            state: GameState::InGame,
         })
         .add_plugins(WallPlugin {
-            state: GameState::Running,
+            state: GameState::InGame,
         })
         .add_plugins(PlayerPlugin {
-            state: GameState::Running,
+            state: GameState::InGame,
         })
-        .add_plugins(hud::HudPlugin)
+        .add_plugins(hud::HudPlugin {
+            state: GameState::InGame,
+        })
         .run();
 }
 

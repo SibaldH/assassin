@@ -2,12 +2,14 @@ use bevy::prelude::*;
 
 use crate::{gamestate::GameState, player::ManaState};
 
-pub struct HudPlugin;
+pub struct HudPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for HudPlugin {
+impl<S: States> Plugin for HudPlugin<S> {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScoreTimer(Timer::from_seconds(1., TimerMode::Repeating)));
-        app.add_systems(Startup, setup_hud);
+        app.add_systems(Startup, setup_hud.run_if(in_state(self.state.clone())));
         app.add_systems(Update, update_hud);
     }
 }
@@ -107,10 +109,6 @@ fn update_hud(
     mana_state: Res<ManaState>,
     mut mana_query: Query<&mut Node, With<ManaValue>>,
 ) {
-    if game_state.get() != &GameState::Running {
-        return;
-    }
-
     for mut mana_bar in &mut mana_query {
         mana_bar.width = Val::Percent(mana_state.percentage);
     }

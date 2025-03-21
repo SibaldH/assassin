@@ -11,9 +11,11 @@ impl Plugin for GameStatePlugin {
 
 #[derive(States, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
-    Running,
+    InGame,
+    Scanning,
     #[default]
-    Paused,
+    Scanning,
+    MainMenu,
 }
 
 fn toggle_pause(
@@ -23,8 +25,10 @@ fn toggle_pause(
 ) {
     if keys.just_pressed(KeyCode::KeyP) {
         match current_state.get() {
-            GameState::Paused => next_state.set(GameState::Running),
-            GameState::Running => next_state.set(GameState::Paused),
+            GameState::MainMenu => next_state.set(GameState::Scanning),
+            GameState::Scanning => next_state.set(GameState::MainMenu),
+            GameState::Scanning => next_state.set(GameState::InGame),
+            GameState::InGame => next_state.set(GameState::Scanning),
         }
     }
 }
