@@ -103,7 +103,7 @@ fn spawn_colliders(
     // Spawn colliders for all the walls
     for (node, node_entity) in node_query.iter() {
         //Check if the node is inside the range_nodes
-        if !range_nodes.0.contains(&node_entity) && game_state.get() != &GameState::Paused {
+        if !range_nodes.0.contains(&node_entity) && game_state.get() != &GameState::Scanning {
             continue;
         }
 
@@ -148,7 +148,7 @@ fn spawn_colliders(
                 Wall,
             ));
 
-            if game_state.get() == &GameState::Paused {
+            if game_state.get() == &GameState::Scanning {
                 commands.spawn((
                     ShapeBundle {
                         path: GeometryBuilder::build_as(&shapes::Rectangle {
