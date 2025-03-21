@@ -250,14 +250,16 @@ fn glitch_wall(
         return;
     }
     for (player, mut transform) in player_query.iter_mut() {
-        if player.against_wall == Some(true) && keys.pressed(KeyCode::KeyA) {
-            transform.translation.x -= maze.cell_size;
-            mana_state.percentage -= 10.;
-            mana_state.recovery_timer.reset();
-        } else if player.against_wall == Some(false) && keys.pressed(KeyCode::KeyD) {
-            transform.translation.x += maze.cell_size;
-            mana_state.percentage -= 10.;
-            mana_state.recovery_timer.reset();
+        if mana_state.percentage >= 10.0 {
+            if player.against_wall == Some(true) && keys.pressed(KeyCode::KeyA) {
+                transform.translation.x -= maze.cell_size;
+                mana_state.percentage -= 10.;
+                mana_state.recovery_timer.reset();
+            } else if player.against_wall == Some(false) && keys.pressed(KeyCode::KeyD) {
+                transform.translation.x += maze.cell_size;
+                mana_state.percentage -= 10.;
+                mana_state.recovery_timer.reset();
+            }
         }
     }
 }
