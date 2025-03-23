@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{gamestate::GameState, player::ManaState};
+use crate::player::ManaState;
 
 pub struct HudPlugin<S: States> {
     pub state: S,
@@ -10,7 +10,7 @@ impl<S: States> Plugin for HudPlugin<S> {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScoreTimer(Timer::from_seconds(1., TimerMode::Repeating)));
         app.add_systems(Startup, setup_hud.run_if(in_state(self.state.clone())));
-        app.add_systems(Update, update_hud);
+        app.add_systems(Update, update_hud.run_if(in_state(self.state.clone())));
     }
 }
 
@@ -104,7 +104,6 @@ fn setup_hud(mut commands: Commands, asset_server: Res<AssetServer>, mana_state:
 fn update_hud(
     time: Res<Time>,
     mut timer: ResMut<ScoreTimer>,
-    game_state: Res<State<GameState>>,
     mut time_query: Query<(&mut Text, &mut ScoreValue)>,
     mana_state: Res<ManaState>,
     mut mana_query: Query<&mut Node, With<ManaValue>>,

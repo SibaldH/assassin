@@ -2,20 +2,14 @@ use bevy::prelude::*;
 use bevy_light_2d::plugin::Light2dPlugin;
 use bevy_prototype_lyon::prelude::*;
 use camera::CameraPlugin;
-use iyes_perf_ui::{
-    entries::{
-        PerfUiFixedTimeEntries, PerfUiFramerateEntries, PerfUiSystemEntries, PerfUiWindowEntries,
-    },
-    prelude::*,
-};
+use hud::HudPlugin;
+use iyes_perf_ui::{entries::PerfUiFramerateEntries, prelude::*};
 
-use bevy_rapier2d::{
-    plugin::{NoUserData, RapierPhysicsPlugin},
-    render::RapierDebugRenderPlugin,
-};
+use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
+use menu_screens::MenuPlugin;
 use player::PlayerPlugin;
 use walls::WallPlugin;
 
@@ -24,6 +18,7 @@ mod gamestate;
 mod hud;
 mod maze;
 mod maze_specs;
+mod menu_screens;
 mod player;
 mod walls;
 
@@ -50,7 +45,7 @@ fn main() {
             PerfUiPlugin,
             Light2dPlugin,
         ))
-        .add_systems(Startup, setup)
+        .add_systems(OnEnter(GameState::InGame), setup)
         .insert_resource(MazeColor {
             path_color: Color::srgb(0.2, 0.2, 0.2),
             wall_color: Color::srgb(0.8, 0.8, 0.8),
@@ -72,9 +67,10 @@ fn main() {
         .add_plugins(PlayerPlugin {
             state: GameState::InGame,
         })
-        .add_plugins(hud::HudPlugin {
+        .add_plugins(HudPlugin {
             state: GameState::InGame,
         })
+        .add_plugins(MenuPlugin)
         .run();
 }
 
@@ -82,13 +78,6 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         // Contains everything related to FPS and frame time
         PerfUiFramerateEntries::default(),
-        // Contains everything related to the window and cursor
-        PerfUiWindowEntries::default(),
-        // Contains everything related to system diagnostics (CPU, RAM)
-        PerfUiSystemEntries::default(),
-        // Contains everything related to fixed timestep
-        PerfUiFixedTimeEntries::default(),
-        // ...
     ));
 }
 
