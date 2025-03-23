@@ -13,7 +13,7 @@
 - [ ] Add iyes_progress
 - [x] Add gravity
 - [x] Change camera based on state
-- [ ] Change player placeholder sprite
+- [x] Change player placeholder sprite
 
 ## IDEAS
 - [ ] see the entire map (ability)

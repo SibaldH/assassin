@@ -60,10 +60,12 @@ pub struct ManaState {
 pub struct RangeNodes(pub Vec<Entity>);
 
 fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
+    let playersize = maze.cell_size * 0.5;
+
     commands.spawn((
         ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Circle {
-                radius: maze.cell_size * 0.2,
+            path: GeometryBuilder::build_as(&shapes::Rectangle {
+                extents: Vec2::new(playersize * 0.5, playersize),
                 ..default()
             }),
             transform: Transform::from_xyz(0., 0., 10.),
@@ -78,7 +80,7 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
         Sleeping::disabled(),
         ActiveEvents::COLLISION_EVENTS,
         Ccd::enabled(),
-        Collider::ball(maze.cell_size * 0.2),
+        Collider::cuboid(playersize * 0.5 * 0.5, playersize * 0.5),
         Player {
             speed: 200.0,
             sprint_factor: 1.5,
@@ -188,7 +190,7 @@ fn update_player_state(
 
         // Check if grounded (raycast downward)
         player.is_grounded = false;
-        let ground_ray_length = collider.as_ball().unwrap().radius() + 0.1;
+        let ground_ray_length = collider.as_cuboid().unwrap().half_extents().y + 0.1;
         if let Some((_, toi)) = rapier_context.single().cast_ray(
             position.truncate(),
             Vec2::new(0.0, -1.0),
@@ -204,7 +206,7 @@ fn update_player_state(
 
         // Check if against wall (raycast left and right)
         player.against_wall = None;
-        let wall_ray_length = collider.as_ball().unwrap().radius() + 0.1;
+        let wall_ray_length = collider.as_cuboid().unwrap().half_extents().x + 0.1;
 
         // Check left wall
         if rapier_context
