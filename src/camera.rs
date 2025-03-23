@@ -8,7 +8,10 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_cameras);
         app.add_systems(Update, (follow_player).run_if(in_state(GameState::InGame)));
-        app.add_systems(Update, center_camera.run_if(in_state(GameState::Scanning)));
+        app.add_systems(
+            Update,
+            center_camera.run_if(in_state(GameState::Scanning).or(in_state(GameState::MainMenu))),
+        );
         app.add_systems(Update, zoom_camera);
     }
 }
