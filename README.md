@@ -2,17 +2,18 @@
 
 ## TODO
 - [x] Fix slow gameplay
-- [ ] Cleanup code 
+- [x] Cleanup code 
 - [x] Split MazePlugin
 - [x] Implement shadow
 - [ ] Add player sprite
 - [x] Add fps counter
 - [ ] Push player out wall
-- [ ] Add start screen
-- [ ] Add settings screen
+- [x] Add start screen
+- [x] Add settings screen
 - [ ] Add iyes_progress
 - [x] Add gravity
 - [x] Change camera based on state
+- [ ] Change player placeholder sprite
 
 ## IDEAS
 - [ ] see the entire map (ability)
