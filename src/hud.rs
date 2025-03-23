@@ -9,7 +9,7 @@ pub struct HudPlugin<S: States> {
 impl<S: States> Plugin for HudPlugin<S> {
     fn build(&self, app: &mut App) {
         app.insert_resource(ScoreTimer(Timer::from_seconds(1., TimerMode::Repeating)));
-        app.add_systems(Startup, setup_hud.run_if(in_state(self.state.clone())));
+        app.add_systems(OnEnter(self.state.clone()), setup_hud);
         app.add_systems(Update, update_hud.run_if(in_state(self.state.clone())));
     }
 }
