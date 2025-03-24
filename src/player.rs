@@ -22,6 +22,7 @@ impl<S: States> Plugin for PlayerPlugin<S> {
             change_value: 0.1,
         });
         app.add_systems(Startup, spawn_player);
+        app.add_systems(Update, log_state);
         app.add_systems(
             Update,
             (
@@ -186,19 +187,29 @@ fn update_player_state(
     rapier_context: WriteRapierContext,
 ) {
     for (mut player, transform, collider) in player_query.iter_mut() {
-        let position = transform.translation;
+        let position = transform.translation.truncate();
+        let half_extents = collider.as_cuboid().unwrap().half_extents();
+        let shape_rotation = 0.0;
+
+        let buffer = 0.1;
 
         // Check if grounded (raycast downward)
         player.is_grounded = false;
-        let ground_ray_length = collider.as_cuboid().unwrap().half_extents().y + 0.1;
-        if let Some((_, toi)) = rapier_context.single().cast_ray(
-            position.truncate(),
+        let ground_cast_distance = half_extents.y + buffer;
+        if let Some((_, toi)) = rapier_context.single().cast_shape(
+            position,
+            shape_rotation,
             Vec2::new(0.0, -1.0),
-            ground_ray_length,
-            true,
+            collider,
+            ShapeCastOptions {
+                target_distance: ground_cast_distance,
+                stop_at_penetration: true,
+                compute_impact_geometry_on_penetration: true,
+                ..default()
+            },
             QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
         ) {
-            if toi <= ground_ray_length {
+            if toi.time_of_impact <= ground_cast_distance {
                 player.is_grounded = true;
                 player.jumps_left = player.max_jumps;
             }
@@ -206,16 +217,22 @@ fn update_player_state(
 
         // Check if against wall (raycast left and right)
         player.against_wall = None;
-        let wall_ray_length = collider.as_cuboid().unwrap().half_extents().x + 0.1;
+        let wall_cast_distance = half_extents.x + buffer;
 
         // Check left wall
         if rapier_context
             .single()
-            .cast_ray(
-                position.truncate(),
+            .cast_shape(
+                position,
+                shape_rotation,
                 Vec2::new(-1.0, 0.0),
-                wall_ray_length,
-                true,
+                collider,
+                ShapeCastOptions {
+                    target_distance: wall_cast_distance,
+                    stop_at_penetration: false,
+                    compute_impact_geometry_on_penetration: false,
+                    ..default()
+                },
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
             .is_some()
@@ -227,16 +244,22 @@ fn update_player_state(
         // Check right wall
         if rapier_context
             .single()
-            .cast_ray(
-                position.truncate(),
+            .cast_shape(
+                position,
+                shape_rotation,
                 Vec2::new(1.0, 0.0),
-                wall_ray_length,
-                true,
+                collider,
+                ShapeCastOptions {
+                    target_distance: wall_cast_distance,
+                    stop_at_penetration: false,
+                    compute_impact_geometry_on_penetration: false,
+                    ..default()
+                },
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
             .is_some()
         {
-            player.against_wall = Some(false);
+            player.against_wall = Some(false); // false = right wall
             player.jumps_left = player.max_jumps;
         }
     }
@@ -263,5 +286,13 @@ fn glitch_wall(
                 mana_state.recovery_timer.reset();
             }
         }
+    }
+}
+
+fn log_state(player_state: Query<&Player>) {
+    for player in player_state.iter() {
+        print!("Is grounded: {} | ", player.is_grounded);
+        print!("Against wall: {:?} | ", player.against_wall);
+        println!("Jumps left: {}", player.jumps_left);
     }
 }
