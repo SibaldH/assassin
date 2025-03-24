@@ -14,6 +14,8 @@
 - [x] Add gravity
 - [x] Change camera based on state
 - [x] Change player placeholder sprite
+- [ ] Random player spawn
+- [ ] Change scaling
 
 ## IDEAS
 - [ ] see the entire map (ability)
