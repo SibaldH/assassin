@@ -11,7 +11,6 @@
 - [x] Add start screen
 - [x] Add settings screen
 - [ ] Add iyes_progress
-- [x] Add gravity
 - [x] Change camera based on state
 - [x] Change player placeholder sprite
 - [ ] Random player spawn
@@ -23,6 +22,5 @@
 - [ ] Call maze head (ability)
 - [ ] teleport station (ability)
 - [x] glitch through walls (ability)
-- [ ] wall jump (ability)
 - [ ] create rooms (ability)
 - [ ] light up the whole maze (objective)
