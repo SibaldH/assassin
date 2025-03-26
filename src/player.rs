@@ -4,7 +4,7 @@ use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    maze::{Maze, MazeNode},
+    maze::{Direction, Maze, MazeNode},
     maze_specs::MazeColor,
 };
 
@@ -25,8 +25,8 @@ impl<S: States> Plugin for PlayerPlugin<S> {
         app.add_systems(
             Update,
             (
-                update_player,
                 update_player_state,
+                update_player,
                 glitch_wall,
                 update_range_nodes,
             )
@@ -41,11 +41,7 @@ pub struct Player {
     speed: f32,
     sprint_factor: f32,
     is_sprinting: bool,
-    jump_force: f32,
-    max_jumps: u32,
-    jumps_left: u32,
-    is_grounded: bool,
-    against_wall: Option<bool>,
+    against_wall: Vec<Direction>,
 }
 
 #[derive(Resource)]
@@ -65,7 +61,7 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
     commands.spawn((
         ShapeBundle {
             path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(playersize * 0.5, playersize),
+                extents: Vec2::new(playersize * 0.5, playersize * 0.5),
                 ..default()
             }),
             transform: Transform::from_xyz(0., 0., 10.),
@@ -74,22 +70,18 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
         Fill::color(color.player_color),
         RigidBody::Dynamic,
         Velocity::default(),
-        GravityScale(1.),
+        GravityScale(0.),
         LockedAxes::ROTATION_LOCKED,
         KinematicCharacterController::default(),
         Sleeping::disabled(),
         ActiveEvents::COLLISION_EVENTS,
         Ccd::enabled(),
-        Collider::cuboid(playersize * 0.5 * 0.5, playersize * 0.5),
+        Collider::cuboid(playersize * 0.5 * 0.5, playersize * 0.5 * 0.5),
         Player {
             speed: 200.0,
             sprint_factor: 1.5,
             is_sprinting: false,
-            jump_force: maze.cell_size * 10.,
-            max_jumps: 2,
-            jumps_left: 0,
-            is_grounded: false,
-            against_wall: None,
+            against_wall: Vec::new(),
         },
         PointLight2d {
             intensity: 20.0,
@@ -125,17 +117,27 @@ fn update_player(
 ) {
     let (mut velocity, mut player) = player_controllers.single_mut();
 
-    let mut direction = 0.0;
-    if keys.pressed(KeyCode::KeyA) {
-        direction -= 1.;
+    let mut direction = Vec2::ZERO;
+    if keys.pressed(KeyCode::KeyA) && !player.against_wall.contains(&Direction::Left) {
+        direction.x -= 1.;
     }
-    if keys.pressed(KeyCode::KeyD) {
-        direction += 1.;
+    if keys.pressed(KeyCode::KeyD) && !player.against_wall.contains(&Direction::Right) {
+        direction.x += 1.;
+    }
+    if keys.pressed(KeyCode::KeyW) && !player.against_wall.contains(&Direction::Up) {
+        direction.y += 1.;
+    }
+    if keys.pressed(KeyCode::KeyS) && !player.against_wall.contains(&Direction::Down) {
+        direction.y -= 1.;
+    }
+
+    if direction != Vec2::ZERO {
+        direction = direction.normalize();
     }
 
     // Shift for sprint
     player.is_sprinting = (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight))
-        && direction != 0.0
+        && direction != Vec2::ZERO
         && mana_state.percentage > 0.0;
 
     let mut speed = player.speed;
@@ -163,22 +165,7 @@ fn update_player(
         }
     }
 
-    let desired_velocity_x = direction * speed;
-    velocity.linvel.x = match player.against_wall {
-        Some(check) => {
-            if (direction < 0.0) == check {
-                0.0
-            } else {
-                desired_velocity_x
-            }
-        }
-        None => desired_velocity_x,
-    };
-
-    if keys.just_pressed(KeyCode::Space) && player.jumps_left > 0 {
-        velocity.linvel.y = player.jump_force;
-        player.jumps_left -= 1;
-    }
+    velocity.linvel = direction * speed;
 }
 
 fn update_player_state(
@@ -191,27 +178,39 @@ fn update_player_state(
 
         let buffer = 0.1;
 
-        // Check if grounded (raycast downward)
-        player.is_grounded = false;
-        let ground_ray_length = half_extents.y + buffer;
+        let mut directions = Vec::new();
+
+        let ray_length = half_extents.y + buffer;
+
+        // Check downwards wall
         if rapier_context
             .single()
             .cast_ray(
                 position,
                 Vec2::new(0.0, -1.0),
-                ground_ray_length,
+                ray_length,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
             .is_some()
         {
-            player.is_grounded = true;
-            player.jumps_left = player.max_jumps;
+            directions.push(Direction::Down);
         }
 
-        // Check if against wall (raycast left and right)
-        player.against_wall = None;
-        let wall_ray_length = half_extents.x + buffer;
+        //Check upwards wall
+        if rapier_context
+            .single()
+            .cast_ray(
+                position,
+                Vec2::new(0.0, 1.0),
+                ray_length,
+                true,
+                QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
+            )
+            .is_some()
+        {
+            directions.push(Direction::Up);
+        }
 
         //Check left wall
         if rapier_context
@@ -219,14 +218,13 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(-1.0, 0.0),
-                wall_ray_length,
+                ray_length,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
             .is_some()
         {
-            player.against_wall = Some(true);
-            player.jumps_left = player.max_jumps;
+            directions.push(Direction::Left);
         }
 
         // Check right wall
@@ -235,15 +233,16 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(1.0, 0.0),
-                wall_ray_length,
+                ray_length,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
             .is_some()
         {
-            player.against_wall = Some(false);
-            player.jumps_left = player.max_jumps;
+            directions.push(Direction::Right);
         }
+
+        player.against_wall = directions;
     }
 }
 
@@ -258,14 +257,41 @@ fn glitch_wall(
     }
     for (player, mut transform) in player_query.iter_mut() {
         if mana_state.percentage >= 10.0 {
-            if player.against_wall == Some(true) && keys.pressed(KeyCode::KeyA) {
-                transform.translation.x -= maze.cell_size;
-                mana_state.percentage -= 10.;
-                mana_state.recovery_timer.reset();
-            } else if player.against_wall == Some(false) && keys.pressed(KeyCode::KeyD) {
-                transform.translation.x += maze.cell_size;
-                mana_state.percentage -= 10.;
-                mana_state.recovery_timer.reset();
+            for dir in player.against_wall.iter() {
+                match *dir {
+                    Direction::Left => {
+                        if !keys.pressed(KeyCode::KeyA) {
+                            continue;
+                        }
+                        transform.translation -= Vec3::new(maze.cell_size, 0., 0.);
+                        mana_state.percentage -= 10.0;
+                        mana_state.recovery_timer.reset();
+                    }
+                    Direction::Right => {
+                        if !keys.pressed(KeyCode::KeyD) {
+                            continue;
+                        }
+                        transform.translation += Vec3::new(maze.cell_size, 0., 0.);
+                        mana_state.percentage -= 10.0;
+                        mana_state.recovery_timer.reset();
+                    }
+                    Direction::Up => {
+                        if !keys.pressed(KeyCode::KeyW) {
+                            continue;
+                        }
+                        transform.translation += Vec3::new(0., maze.cell_size, 0.);
+                        mana_state.percentage -= 10.0;
+                        mana_state.recovery_timer.reset();
+                    }
+                    Direction::Down => {
+                        if !keys.pressed(KeyCode::KeyS) {
+                            continue;
+                        }
+                        transform.translation -= Vec3::new(0., maze.cell_size, 0.);
+                        mana_state.percentage -= 10.0;
+                        mana_state.recovery_timer.reset();
+                    }
+                }
             }
         }
     }
