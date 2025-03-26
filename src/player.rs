@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, reflect::List};
 use bevy_light_2d::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -14,6 +14,7 @@ pub struct PlayerPlugin<S: States> {
 
 impl<S: States> Plugin for PlayerPlugin<S> {
     fn build(&self, app: &mut App) {
+        app.insert_resource(FirstRunTracker(false));
         app.insert_resource(RangeNodes(Vec::new()));
         app.insert_resource(ManaState {
             mana_timer: Timer::from_seconds(0.0025, TimerMode::Repeating),
@@ -21,7 +22,7 @@ impl<S: States> Plugin for PlayerPlugin<S> {
             percentage: 100.0,
             change_value: 0.1,
         });
-        app.add_systems(Startup, spawn_player);
+        app.add_systems(OnEnter(self.state.clone()), spawn_player);
         app.add_systems(
             Update,
             (
@@ -42,7 +43,19 @@ pub struct Player {
     sprint_factor: f32,
     is_sprinting: bool,
     against_wall: Vec<Direction>,
+    state: PlayerState,
+    direction: Direction,
 }
+
+enum PlayerState {
+    Idle,
+    Walking,
+    Hurt,
+    Death,
+}
+
+#[derive(Resource)]
+struct FirstRunTracker(bool);
 
 #[derive(Resource)]
 pub struct ManaState {
@@ -55,18 +68,84 @@ pub struct ManaState {
 #[derive(Resource)]
 pub struct RangeNodes(pub Vec<Entity>);
 
-fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) {
+#[derive(Component)]
+struct PlayerAnimation {
+    current_animation_indices: Vec<usize>,
+    current_frame_index: usize,
+    frame_timer: Timer,
+}
+
+fn setup_sprite(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let image_handle: Handle<Image> = asset_server.load("sprite/character/Prototype_Character.png");
+
+    let mut layout_rects = Vec::new();
+
+    let create_rect = |x: f32, y: f32| -> Rect {
+        Rect {
+            min: Vec2::new(x, y),
+            max: Vec2::new(x + 16.0, y + 16.0),
+        }
+    };
+
+    // Row 4: Idle (4 directions: down, right, up, left) -> indices 0-3
+    for i in 0..4 {
+        layout_rects.push(create_rect(i as f32 * 16.0, 48.0));
+    }
+
+    // Row 5: Walk frame 1 (4 directions) -> indices 4-7
+    for i in 0..4 {
+        layout_rects.push(create_rect(i as f32 * 16.0, 64.0));
+    }
+
+    // Row 6: Walk frame 2 (4 directions) -> indices 8-11
+    for i in 0..4 {
+        layout_rects.push(create_rect(i as f32 * 16.0, 80.0));
+    }
+
+    // Row 7: Hurt (1 sprite, same for all directions) -> index 12
+    layout_rects.push(create_rect(0.0, 96.0));
+
+    // Row 8: Death frame 1 (1 sprite) -> index 13
+    layout_rects.push(create_rect(0.0, 112.0));
+
+    // Row 9: Death frame 2 (1 sprite) -> index 14
+    layout_rects.push(create_rect(0.0, 128.0));
+
+    let texture_atlas_layout = TextureAtlasLayout::from_grid(UVec2::new(16, 16), 4, 12, None, None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas_layout);
+}
+
+fn spawn_player(
+    mut commands: Commands,
+    maze: Res<Maze>,
+    color: Res<MazeColor>,
+    mut run_once: ResMut<FirstRunTracker>,
+) {
+    if !run_once.0 {
+        run_once.0 = true;
+    } else {
+        return;
+    }
+
     let playersize = maze.cell_size * 0.5;
 
     commands.spawn((
-        ShapeBundle {
-            path: GeometryBuilder::build_as(&shapes::Rectangle {
-                extents: Vec2::new(playersize * 0.5, playersize * 0.5),
-                ..default()
-            }),
-            transform: Transform::from_xyz(0., 0., 10.),
-            ..default()
-        },
+        // ShapeBundle {
+        //     path: GeometryBuilder::build_as(&shapes::Rectangle {
+        //         extents: Vec2::new(playersize * 0.5, playersize * 0.5),
+        //         ..default()
+        //     }),
+        //     transform: Transform::from_xyz(0., 0., 10.),
+        //     ..default()
+        // },
+        Sprite::from_atlas_image(TextureAtlas {
+            layout: TextureAtlasLayout::from_grid(UVec2::new(16, 16), 4, 12, None, None),
+            index: 0,
+        }),
         Fill::color(color.player_color),
         RigidBody::Dynamic,
         Velocity::default(),
@@ -82,6 +161,8 @@ fn spawn_player(mut commands: Commands, maze: Res<Maze>, color: Res<MazeColor>) 
             sprint_factor: 1.5,
             is_sprinting: false,
             against_wall: Vec::new(),
+            state: PlayerState::Idle,
+            direction: Direction::Down,
         },
         PointLight2d {
             intensity: 20.0,
@@ -131,8 +212,20 @@ fn update_player(
         direction.y -= 1.;
     }
 
+    // Set player direction | Prioritize left and right over up and down when moving diagonally
+    if direction.x > 0. {
+        player.direction = Direction::Right;
+    } else if direction.x < 0. {
+        player.direction = Direction::Left;
+    } else if direction.y > 0. {
+        player.direction = Direction::Up;
+    } else if direction.y < 0. {
+        player.direction = Direction::Down;
+    }
+
     if direction != Vec2::ZERO {
         direction = direction.normalize();
+        player.state = PlayerState::Walking;
     }
 
     // Shift for sprint
