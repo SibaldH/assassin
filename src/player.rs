@@ -75,11 +75,20 @@ struct PlayerAnimation {
     frame_timer: Timer,
 }
 
-fn setup_sprite(
+fn spawn_player(
     mut commands: Commands,
+    maze: Res<Maze>,
+    color: Res<MazeColor>,
+    mut run_once: ResMut<FirstRunTracker>,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
+    if !run_once.0 {
+        run_once.0 = true;
+    } else {
+        return;
+    }
+
     let image_handle: Handle<Image> = asset_server.load("sprite/character/Prototype_Character.png");
 
     let mut layout_rects = Vec::new();
@@ -117,19 +126,6 @@ fn setup_sprite(
 
     let texture_atlas_layout = TextureAtlasLayout::from_grid(UVec2::new(16, 16), 4, 12, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas_layout);
-}
-
-fn spawn_player(
-    mut commands: Commands,
-    maze: Res<Maze>,
-    color: Res<MazeColor>,
-    mut run_once: ResMut<FirstRunTracker>,
-) {
-    if !run_once.0 {
-        run_once.0 = true;
-    } else {
-        return;
-    }
 
     let playersize = maze.cell_size * 0.5;
 
@@ -142,10 +138,13 @@ fn spawn_player(
         //     transform: Transform::from_xyz(0., 0., 10.),
         //     ..default()
         // },
-        Sprite::from_atlas_image(TextureAtlas {
-            layout: TextureAtlasLayout::from_grid(UVec2::new(16, 16), 4, 12, None, None),
-            index: 0,
-        }),
+        Sprite::from_atlas_image(
+            image_handle,
+            TextureAtlas {
+                layout: texture_atlas_handle,
+                index: 0,
+            },
+        ),
         Fill::color(color.player_color),
         RigidBody::Dynamic,
         Velocity::default(),
