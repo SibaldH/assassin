@@ -1,12 +1,10 @@
-use bevy::{prelude::*, reflect::List};
+use std::collections::HashMap;
+
+use bevy::prelude::*;
 use bevy_light_2d::prelude::*;
-use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    maze::{Direction, Maze, MazeNode},
-    maze_specs::MazeColor,
-};
+use crate::maze::{Direction, Maze, MazeNode};
 
 pub struct PlayerPlugin<S: States> {
     pub state: S,
@@ -28,6 +26,8 @@ impl<S: States> Plugin for PlayerPlugin<S> {
             (
                 update_player_state,
                 update_player,
+                update_player_animation,
+                animate_player_sprite,
                 glitch_wall,
                 update_range_nodes,
             )
@@ -36,6 +36,8 @@ impl<S: States> Plugin for PlayerPlugin<S> {
         );
     }
 }
+
+const PLAYER_FPS: u8 = 8;
 
 #[derive(Component)]
 pub struct Player {
@@ -47,11 +49,77 @@ pub struct Player {
     direction: Direction,
 }
 
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 enum PlayerState {
     Idle,
     Walking,
     Hurt,
     Death,
+}
+
+#[derive(Component, Clone, Debug)]
+struct PlayerAnimation {
+    first_index: usize,
+    last_index: usize,
+    frame_timer: Timer,
+    flip_x: bool,
+}
+
+impl PlayerAnimation {
+    fn new(first_index: usize, last_index: usize, flip_x: bool) -> Self {
+        Self {
+            first_index,
+            last_index,
+            frame_timer: Self::timer_from_fps(PLAYER_FPS),
+            flip_x,
+        }
+    }
+
+    fn timer_from_fps(fps: u8) -> Timer {
+        Timer::from_seconds(1. / fps as f32, TimerMode::Once)
+    }
+}
+
+#[derive(Component)]
+struct PlayerAnimations {
+    animations: HashMap<(PlayerState, Direction), PlayerAnimation>,
+    current_animation: PlayerAnimation,
+}
+
+impl PlayerAnimations {
+    fn new() -> Self {
+        let mut animations = HashMap::new();
+
+        animations.insert(
+            (PlayerState::Idle, Direction::Down),
+            PlayerAnimation::new(0, 1, false),
+        );
+        animations.insert(
+            (PlayerState::Idle, Direction::Left),
+            PlayerAnimation::new(4, 5, true),
+        );
+        animations.insert(
+            (PlayerState::Idle, Direction::Right),
+            PlayerAnimation::new(4, 5, false),
+        );
+        animations.insert(
+            (PlayerState::Idle, Direction::Up),
+            PlayerAnimation::new(8, 9, false),
+        );
+
+        let default_animation = animations[&(PlayerState::Idle, Direction::Up)].clone();
+
+        Self {
+            animations,
+            current_animation: default_animation,
+        }
+    }
+
+    fn update_animation(&mut self, state: PlayerState, dir: Direction) {
+        if let Some(animation) = self.animations.get(&(state, dir)) {
+            self.current_animation = animation.clone()
+        }
+    }
 }
 
 #[derive(Resource)]
@@ -68,18 +136,36 @@ pub struct ManaState {
 #[derive(Resource)]
 pub struct RangeNodes(pub Vec<Entity>);
 
-#[derive(Component)]
-struct PlayerAnimation {
-    current_animation_indices: Vec<usize>,
-    current_frame_index: usize,
-    frame_timer: Timer,
+fn update_player_animation(mut query: Query<(&Player, &mut PlayerAnimations)>) {
+    for (player, mut animations) in query.iter_mut() {
+        animations.update_animation(player.state.clone(), player.direction);
+    }
+}
+
+fn animate_player_sprite(time: Res<Time>, mut query: Query<(&mut Sprite, &mut PlayerAnimations)>) {
+    for (mut sprite, mut animations) in query.iter_mut() {
+        let animation = &mut animations.current_animation;
+        animation.frame_timer.tick(time.delta());
+
+        if animation.frame_timer.just_finished() {
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                atlas.index = if atlas.index >= animation.last_index {
+                    animation.first_index
+                } else {
+                    atlas.index + 1
+                }
+            }
+
+            animation.frame_timer.reset();
+        }
+        sprite.flip_x = animation.flip_x;
+    }
 }
 
 fn spawn_player(
     mut commands: Commands,
-    maze: Res<Maze>,
-    color: Res<MazeColor>,
     mut run_once: ResMut<FirstRunTracker>,
+    maze: Res<Maze>,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
@@ -89,63 +175,37 @@ fn spawn_player(
         return;
     }
 
-    let image_handle: Handle<Image> = asset_server.load("sprite/character/Prototype_Character.png");
+    let image_handle: Handle<Image> =
+        asset_server.load("sprite/character/Prototype_Character_Blue.png");
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::splat(16),
+        4,
+        12,
+        Some(UVec2::splat(16)),
+        Some(UVec2::splat(8)),
+    );
+    let texture_atlas_layout = texture_atlases.add(layout);
 
-    let mut layout_rects = Vec::new();
-
-    let create_rect = |x: f32, y: f32| -> Rect {
-        Rect {
-            min: Vec2::new(x, y),
-            max: Vec2::new(x + 16.0, y + 16.0),
-        }
-    };
-
-    // Row 4: Idle (4 directions: down, right, up, left) -> indices 0-3
-    for i in 0..4 {
-        layout_rects.push(create_rect(i as f32 * 16.0, 48.0));
-    }
-
-    // Row 5: Walk frame 1 (4 directions) -> indices 4-7
-    for i in 0..4 {
-        layout_rects.push(create_rect(i as f32 * 16.0, 64.0));
-    }
-
-    // Row 6: Walk frame 2 (4 directions) -> indices 8-11
-    for i in 0..4 {
-        layout_rects.push(create_rect(i as f32 * 16.0, 80.0));
-    }
-
-    // Row 7: Hurt (1 sprite, same for all directions) -> index 12
-    layout_rects.push(create_rect(0.0, 96.0));
-
-    // Row 8: Death frame 1 (1 sprite) -> index 13
-    layout_rects.push(create_rect(0.0, 112.0));
-
-    // Row 9: Death frame 2 (1 sprite) -> index 14
-    layout_rects.push(create_rect(0.0, 128.0));
-
-    let texture_atlas_layout = TextureAtlasLayout::from_grid(UVec2::new(16, 16), 4, 12, None, None);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas_layout);
-
-    let playersize = maze.cell_size * 0.5;
+    let player_animations = PlayerAnimations::new();
 
     commands.spawn((
-        // ShapeBundle {
-        //     path: GeometryBuilder::build_as(&shapes::Rectangle {
-        //         extents: Vec2::new(playersize * 0.5, playersize * 0.5),
-        //         ..default()
-        //     }),
-        //     transform: Transform::from_xyz(0., 0., 10.),
-        //     ..default()
-        // },
-        Sprite::from_atlas_image(
-            image_handle,
-            TextureAtlas {
-                layout: texture_atlas_handle,
-                index: 0,
-            },
-        ),
-        Fill::color(color.player_color),
+        PointLight2d {
+            intensity: 20.0,
+            radius: maze.view_distance,
+            falloff: 10.,
+            cast_shadows: true,
+            color: Color::WHITE,
+        },
+        Sprite {
+            image: image_handle,
+            texture_atlas: Some(TextureAtlas {
+                layout: texture_atlas_layout,
+                index: player_animations.current_animation.first_index,
+            }),
+            flip_x: player_animations.current_animation.flip_x,
+            ..default()
+        },
+        player_animations,
         RigidBody::Dynamic,
         Velocity::default(),
         GravityScale(0.),
@@ -154,7 +214,7 @@ fn spawn_player(
         Sleeping::disabled(),
         ActiveEvents::COLLISION_EVENTS,
         Ccd::enabled(),
-        Collider::cuboid(playersize * 0.5 * 0.5, playersize * 0.5 * 0.5),
+        Collider::cuboid(16. * 0.5, 16. * 0.5),
         Player {
             speed: 200.0,
             sprint_factor: 1.5,
@@ -162,13 +222,6 @@ fn spawn_player(
             against_wall: Vec::new(),
             state: PlayerState::Idle,
             direction: Direction::Down,
-        },
-        PointLight2d {
-            intensity: 20.0,
-            radius: maze.view_distance,
-            falloff: 10.,
-            cast_shadows: true,
-            color: Color::WHITE,
         },
     ));
 }
@@ -225,6 +278,8 @@ fn update_player(
     if direction != Vec2::ZERO {
         direction = direction.normalize();
         player.state = PlayerState::Walking;
+    } else {
+        player.state = PlayerState::Idle;
     }
 
     // Shift for sprint

@@ -154,7 +154,7 @@ fn update_maze(
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub enum Direction {
     Up,
     Down,
