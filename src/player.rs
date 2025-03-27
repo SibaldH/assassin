@@ -130,6 +130,38 @@ impl PlayerAnimations {
             (PlayerState::Walking, Direction::Up),
             PlayerAnimation::new(20, 23, false),
         );
+        animations.insert(
+            (PlayerState::Hurt, Direction::Down),
+            PlayerAnimation::new(24, 25, false),
+        );
+        animations.insert(
+            (PlayerState::Hurt, Direction::Up),
+            PlayerAnimation::new(32, 33, false),
+        );
+        animations.insert(
+            (PlayerState::Hurt, Direction::Left),
+            PlayerAnimation::new(28, 29, true),
+        );
+        animations.insert(
+            (PlayerState::Hurt, Direction::Right),
+            PlayerAnimation::new(28, 29, false),
+        );
+        animations.insert(
+            (PlayerState::Death, Direction::Down),
+            PlayerAnimation::new(36, 38, false),
+        );
+        animations.insert(
+            (PlayerState::Death, Direction::Left),
+            PlayerAnimation::new(40, 42, true),
+        );
+        animations.insert(
+            (PlayerState::Death, Direction::Right),
+            PlayerAnimation::new(40, 42, false),
+        );
+        animations.insert(
+            (PlayerState::Death, Direction::Up),
+            PlayerAnimation::new(44, 46, false),
+        );
 
         let default_animation = animations[&(PlayerState::Idle, Direction::Up)].clone();
 
