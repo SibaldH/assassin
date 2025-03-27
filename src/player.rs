@@ -80,6 +80,14 @@ impl PlayerAnimation {
     }
 }
 
+impl PartialEq for PlayerAnimation {
+    fn eq(&self, other: &Self) -> bool {
+        self.first_index == other.first_index
+            && self.last_index == other.last_index
+            && self.flip_x == other.flip_x
+    }
+}
+
 #[derive(Component)]
 struct PlayerAnimations {
     animations: HashMap<(PlayerState, Direction), PlayerAnimation>,
@@ -106,6 +114,22 @@ impl PlayerAnimations {
             (PlayerState::Idle, Direction::Up),
             PlayerAnimation::new(8, 9, false),
         );
+        animations.insert(
+            (PlayerState::Walking, Direction::Down),
+            PlayerAnimation::new(12, 15, false),
+        );
+        animations.insert(
+            (PlayerState::Walking, Direction::Left),
+            PlayerAnimation::new(16, 19, true),
+        );
+        animations.insert(
+            (PlayerState::Walking, Direction::Right),
+            PlayerAnimation::new(16, 19, false),
+        );
+        animations.insert(
+            (PlayerState::Walking, Direction::Up),
+            PlayerAnimation::new(20, 23, false),
+        );
 
         let default_animation = animations[&(PlayerState::Idle, Direction::Up)].clone();
 
@@ -115,9 +139,16 @@ impl PlayerAnimations {
         }
     }
 
-    fn update_animation(&mut self, state: PlayerState, dir: Direction) {
+    fn update_animation(&mut self, state: PlayerState, dir: Direction) -> bool {
         if let Some(animation) = self.animations.get(&(state, dir)) {
-            self.current_animation = animation.clone()
+            if &self.current_animation != animation {
+                self.current_animation = animation.clone();
+                true
+            } else {
+                false
+            }
+        } else {
+            false
         }
     }
 }
@@ -136,9 +167,14 @@ pub struct ManaState {
 #[derive(Resource)]
 pub struct RangeNodes(pub Vec<Entity>);
 
-fn update_player_animation(mut query: Query<(&Player, &mut PlayerAnimations)>) {
-    for (player, mut animations) in query.iter_mut() {
-        animations.update_animation(player.state.clone(), player.direction);
+fn update_player_animation(mut query: Query<(&Player, &mut PlayerAnimations, &mut Sprite)>) {
+    for (player, mut animations, mut sprite) in query.iter_mut() {
+        if animations.update_animation(player.state.clone(), player.direction) {
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                atlas.index = animations.current_animation.first_index;
+            }
+        }
+        sprite.flip_x = animations.current_animation.flip_x;
     }
 }
 
@@ -149,13 +185,13 @@ fn animate_player_sprite(time: Res<Time>, mut query: Query<(&mut Sprite, &mut Pl
 
         if animation.frame_timer.just_finished() {
             if let Some(atlas) = &mut sprite.texture_atlas {
+                println!("{}", atlas.index);
                 atlas.index = if atlas.index >= animation.last_index {
                     animation.first_index
                 } else {
                     atlas.index + 1
                 }
             }
-
             animation.frame_timer.reset();
         }
         sprite.flip_x = animation.flip_x;

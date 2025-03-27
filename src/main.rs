@@ -5,10 +5,7 @@ use camera::CameraPlugin;
 use hud::HudPlugin;
 use iyes_perf_ui::{entries::PerfUiFramerateEntries, prelude::*};
 
-use bevy_rapier2d::{
-    plugin::{NoUserData, RapierPhysicsPlugin},
-    render::RapierDebugRenderPlugin,
-};
+use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
 use gamestate::{GameState, GameStatePlugin};
 use maze::MazePlugin;
 use maze_specs::{MazeColor, MazeShape};
@@ -43,7 +40,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             ShapePlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.),
-            RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),
             bevy::diagnostic::FrameTimeDiagnosticsPlugin,
             PerfUiPlugin,
             Light2dPlugin,
