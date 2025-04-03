@@ -217,7 +217,6 @@ fn animate_player_sprite(time: Res<Time>, mut query: Query<(&mut Sprite, &mut Pl
 
         if animation.frame_timer.just_finished() {
             if let Some(atlas) = &mut sprite.texture_atlas {
-                println!("{}", atlas.index);
                 atlas.index = if atlas.index >= animation.last_index {
                     animation.first_index
                 } else {
@@ -282,7 +281,7 @@ fn spawn_player(
         Sleeping::disabled(),
         ActiveEvents::COLLISION_EVENTS,
         Ccd::enabled(),
-        Collider::cuboid(16. * 0.5, 16. * 0.5),
+        Collider::cuboid(8. * 0.5, 16. * 0.5),
         Player {
             speed: 200.0,
             sprint_factor: 1.5,
@@ -387,15 +386,15 @@ fn update_player_state(
     mut player_query: Query<(&mut Player, &Transform, &Collider)>,
     rapier_context: WriteRapierContext,
 ) {
+    let buffer = 0.1;
     for (mut player, transform, collider) in player_query.iter_mut() {
         let position = transform.translation.truncate();
         let half_extents = collider.as_cuboid().unwrap().half_extents();
 
-        let buffer = 0.1;
-
         let mut directions = Vec::new();
 
-        let ray_length = half_extents.y + buffer;
+        let ray_length_vertical = half_extents.y + buffer;
+        let ray_length_horizontal = half_extents.x + buffer;
 
         // Check downwards wall
         if rapier_context
@@ -403,7 +402,7 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(0.0, -1.0),
-                ray_length,
+                ray_length_vertical,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
@@ -418,7 +417,7 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(0.0, 1.0),
-                ray_length,
+                ray_length_vertical,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
@@ -433,7 +432,7 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(-1.0, 0.0),
-                ray_length,
+                ray_length_horizontal,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
@@ -448,7 +447,7 @@ fn update_player_state(
             .cast_ray(
                 position,
                 Vec2::new(1.0, 0.0),
-                ray_length,
+                ray_length_horizontal,
                 true,
                 QueryFilter::<'_>::exclude_dynamic().exclude_sensors(),
             )
